@@ -182,6 +182,12 @@ Folium is licensed under the Apache License, Version 2.0. See [LICENSE](./LICENS
 
 Near-term:
 
+- [ ] Add authenticated HTTP API for blocks, search, extraction, and processing status.
+- [ ] Add an in-repo `folium` CLI under `packages/cli` for agent-friendly save/search/get workflows.
+- [ ] Add `docs/cli.md` with human-facing CLI setup and command examples.
+- [ ] Add `skills/folium/SKILL.md` with agent-facing instructions for save/search/get/curate workflows.
+- [ ] Add project-level `AGENTS.md` for coding agents contributing to Folium.
+- [ ] Explore MCP server support for Claude Code, Codex, OpenClaw, Pi, and other agent tools.
 - [ ] Add a Library list view alongside the visual grid for denser browsing.
 - [ ] More detailed worker health checks and stuck-job recovery.
 - [ ] More transparent extraction logs and retry diagnostics per block.
