@@ -201,6 +201,16 @@ export function createLibraryStore(options: StoreOptions = {}) {
       return block;
     },
 
+    async setBlockPinned(id: string, pinned: boolean): Promise<Block> {
+      const data = await readData();
+      const block = data.blocks.find((item) => item.id === id);
+      if (!block) throw new Error(`Block not found: ${id}`);
+      block.curation = { ...defaultCuration(), ...(block.curation ?? {}), favorite: pinned, updatedAt: nowIso() };
+      block.updatedAt = nowIso();
+      await writeData(data);
+      return block;
+    },
+
     async deleteBlock(id: string): Promise<void> {
       const data = await readData();
       const index = data.blocks.findIndex((item) => item.id === id);

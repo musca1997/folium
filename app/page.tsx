@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { BlockGrid } from "@/components/BlockGrid";
 import { Header } from "@/components/Header";
-import { isAuthenticated } from "@/lib/auth";
+import { getCsrfToken, isAuthenticated } from "@/lib/auth";
 import { libraryStore } from "@/lib/store/library";
 
 export const revalidate = 2;
@@ -18,6 +18,7 @@ function pageHref(page: number, visibility: string) {
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ visibility?: string; page?: string }> }) {
   const [{ visibility, page }, authed] = await Promise.all([searchParams, isAuthenticated()]);
+  const csrf = authed ? await getCsrfToken() : "";
   const [blocks, nodes, jobs] = await Promise.all([
     authed ? libraryStore.listBlocks() : libraryStore.listPublicBlocks(),
     authed ? libraryStore.listNodes() : libraryStore.listPublicNodes(),
@@ -26,15 +27,17 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const visibleBlocks = blocks;
   const activeVisibility = visibility === "public" || visibility === "private" ? visibility : "all";
   const filteredBlocks = activeVisibility === "all" ? visibleBlocks : visibleBlocks.filter((block) => block.visibility === activeVisibility);
+  const pinnedBlocks = filteredBlocks.filter((block) => block.curation?.favorite);
+  const libraryBlocks = filteredBlocks.filter((block) => !block.curation?.favorite);
   const publicCount = visibleBlocks.filter((block) => block.visibility === "public").length;
   const privateCount = authed ? blocks.filter((block) => block.visibility !== "public").length : 0;
   const processingCount = jobs.filter((job) => job.status === "queued" || job.status === "running").length;
   const indexedCount = filteredBlocks.filter((block) => block.status === "indexed").length;
-  const totalPages = Math.max(1, Math.ceil(filteredBlocks.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(libraryBlocks.length / PAGE_SIZE));
   const requestedPage = Number.parseInt(page ?? "1", 10);
   const currentPage = Number.isFinite(requestedPage) ? Math.min(Math.max(requestedPage, 1), totalPages) : 1;
   const start = (currentPage - 1) * PAGE_SIZE;
-  const paginatedBlocks = filteredBlocks.slice(start, start + PAGE_SIZE);
+  const paginatedBlocks = libraryBlocks.slice(start, start + PAGE_SIZE);
 
   return (
     <>
@@ -87,6 +90,19 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           </div>
         </section>
 
+        {pinnedBlocks.length > 0 ? (
+          <section className="mb-10">
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-normal tracking-tight">Pinned</h2>
+                <p className="mt-1 text-sm text-muted">Selected references kept at the top of the library.</p>
+              </div>
+              <p className="text-sm text-muted">{pinnedBlocks.length} pinned</p>
+            </div>
+            <BlockGrid blocks={pinnedBlocks} nodes={nodes} csrf={csrf} authed={authed} />
+          </section>
+        ) : null}
+
         <section>
           <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -101,11 +117,11 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               {authed ? <Link href="/?visibility=private" className={`border px-3 py-1.5 ${activeVisibility === "private" ? "border-ink text-ink" : "border-line text-muted hover:border-ink hover:text-ink"}`}>Private {privateCount}</Link> : null}
             </div>
           </div>
-          <BlockGrid blocks={paginatedBlocks} nodes={nodes} />
+          <BlockGrid blocks={paginatedBlocks} nodes={nodes} csrf={csrf} authed={authed} />
           {totalPages > 1 ? (
             <nav className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 text-sm" aria-label="Library pagination">
               <p className="text-muted">
-                Showing {start + 1}–{Math.min(start + PAGE_SIZE, filteredBlocks.length)} of {filteredBlocks.length} references
+                Showing {start + 1}–{Math.min(start + PAGE_SIZE, libraryBlocks.length)} of {libraryBlocks.length} references
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <Link

@@ -6,7 +6,7 @@ import { NodeChips } from "@/components/NodeChips";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { EvidenceList } from "@/components/EvidenceList";
 import { ProcessingTimeline } from "@/components/ProcessingTimeline";
-import { deleteBlockAction, recaptureBlockAction, reprocessBlockWithAiAction, retryBlockProcessingAction, updateBlockAction } from "@/app/actions";
+import { deleteBlockAction, recaptureBlockAction, reprocessBlockWithAiAction, retryBlockProcessingAction, toggleBlockPinAction, updateBlockAction } from "@/app/actions";
 import { getCsrfToken, isAuthenticated } from "@/lib/auth";
 import { libraryStore } from "@/lib/store/library";
 import { getWorkerHeartbeat } from "@/lib/workerHeartbeat";
@@ -49,7 +49,18 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
             </div>
             {authed ? (
               <div className="mt-5 border border-line p-4">
-                <p className="mb-3 text-xs uppercase tracking-wide text-muted">Edit block</p>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-xs uppercase tracking-wide text-muted">Edit block</p>
+                  <form action={toggleBlockPinAction}>
+                    <input type="hidden" name="csrf" value={csrf} />
+                    <input type="hidden" name="id" value={block.id} />
+                    <input type="hidden" name="pinned" value={block.curation?.favorite ? "false" : "true"} />
+                    <input type="hidden" name="next" value={`/blocks/${block.id}`} />
+                    <button type="submit" className="border border-line px-3 py-1.5 text-sm text-muted hover:border-ink hover:text-ink">
+                      {block.curation?.favorite ? "Unpin" : "Pin"}
+                    </button>
+                  </form>
+                </div>
                 <form action={updateBlockAction} className="space-y-3">
                   <input type="hidden" name="csrf" value={csrf} />
                   <input type="hidden" name="id" value={block.id} />

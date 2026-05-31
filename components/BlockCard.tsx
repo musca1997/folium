@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { toggleBlockPinAction } from "@/app/actions";
 import type { Block, WikiNode } from "@/lib/store/types";
 import { NodeChips } from "./NodeChips";
 
@@ -20,7 +21,7 @@ function initials(domain: string): string {
   return domain.replace(/^www\./, "").split(".")[0]?.slice(0, 2) || "f";
 }
 
-export function BlockCard({ block, nodes }: { block: Block; nodes: WikiNode[] }) {
+export function BlockCard({ block, nodes, authed = false, csrf = "" }: { block: Block; nodes: WikiNode[]; authed?: boolean; csrf?: string }) {
   const isProcessing = block.status !== "indexed" && block.status !== "failed";
   const image = block.screenshotPath ?? block.previewImage;
 
@@ -44,6 +45,7 @@ export function BlockCard({ block, nodes }: { block: Block; nodes: WikiNode[] })
             </div>
           )}
           {isProcessing ? <div className="absolute left-2 top-2 border border-line bg-white px-2 py-1 text-[10px] uppercase tracking-wide text-muted">{statusCopy[block.status]}</div> : null}
+          {block.curation?.favorite ? <div className="absolute right-2 top-2 border border-line bg-white px-2 py-1 text-[10px] uppercase tracking-wide text-ink">Pinned</div> : null}
         </div>
         <div className="space-y-3 p-3">
           <div>
@@ -57,9 +59,19 @@ export function BlockCard({ block, nodes }: { block: Block; nodes: WikiNode[] })
           ) : null}
         </div>
       </Link>
-      <div className="px-3 pb-3">
+      <div className="space-y-3 px-3 pb-3">
         <NodeChips block={block} nodes={nodes} />
-
+        {authed ? (
+          <form action={toggleBlockPinAction}>
+            <input type="hidden" name="csrf" value={csrf} />
+            <input type="hidden" name="id" value={block.id} />
+            <input type="hidden" name="pinned" value={block.curation?.favorite ? "false" : "true"} />
+            <input type="hidden" name="next" value="/" />
+            <button type="submit" className="text-xs text-muted underline hover:text-ink">
+              {block.curation?.favorite ? "Unpin" : "Pin"}
+            </button>
+          </form>
+        ) : null}
       </div>
     </article>
   );

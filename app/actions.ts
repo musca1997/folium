@@ -58,6 +58,16 @@ export async function deleteBlockAction(formData: FormData) {
   redirect("/");
 }
 
+export async function toggleBlockPinAction(formData: FormData) {
+  await requireAuthAndCsrf(formData, "/login");
+  const id = String(formData.get("id") ?? "");
+  const next = String(formData.get("next") ?? "/");
+  if (!id) redirect("/");
+  await libraryStore.setBlockPinned(id, formData.get("pinned") === "true");
+  for (const path of ["/", `/blocks/${id}`, "/topics", "/nodes", "/graph", "/search"]) revalidatePath(path);
+  redirect(next.startsWith("/") ? next : "/");
+}
+
 export async function loginAction(formData: FormData) {
   const username = String(formData.get("username") ?? "").trim();
   const password = String(formData.get("password") ?? "");
