@@ -12,9 +12,9 @@ export function BlockGrid({ blocks, nodes, authed = false, csrf = "" }: { blocks
   }
 
   return (
-    <div className="columns-1 gap-4 sm:columns-2 lg:columns-3 xl:columns-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {blocks.map((block) => (
-        <div key={block.id} className="mb-4 break-inside-avoid">
+        <div key={block.id}>
           <BlockCard block={block} nodes={nodes} authed={authed} csrf={csrf} />
         </div>
       ))}
