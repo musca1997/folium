@@ -25,6 +25,18 @@ function meta(document: Document, selector: string): string {
   return document.querySelector(selector)?.getAttribute("content")?.trim() ?? "";
 }
 
+export type VerificationBlockReason = "cloudflare_verification" | "human_verification" | "login_required";
+
+export function detectVerificationBlock(input: { title?: string; textContent?: string }): VerificationBlockReason | null {
+  const title = (input.title ?? "").toLowerCase();
+  const text = (input.textContent ?? "").replace(/\s+/g, " ").toLowerCase();
+  const combined = `${title} ${text}`;
+  if (combined.includes("cloudflare") && (combined.includes("checking your browser") || combined.includes("just a moment") || combined.includes("ray id"))) return "cloudflare_verification";
+  if (combined.includes("verify you are human") || combined.includes("checking if the site connection is secure") || combined.includes("captcha")) return "human_verification";
+  if ((combined.includes("sign in") || combined.includes("log in") || combined.includes("login required")) && combined.length < 5000) return "login_required";
+  return null;
+}
+
 export function extractPageDataFromHtml(html: string, sourceUrl: string): ExtractedPageData {
   const dom = new JSDOM(html, { url: sourceUrl });
   const { document } = dom.window;

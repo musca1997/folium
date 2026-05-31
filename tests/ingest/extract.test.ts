@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractPageDataFromHtml } from "@/lib/ingest/extract";
+import { detectVerificationBlock, extractPageDataFromHtml } from "@/lib/ingest/extract";
 
 const html = `<!doctype html>
 <html>
@@ -37,5 +37,11 @@ describe("extractPageDataFromHtml", () => {
 
     expect(data.textContent).toContain("Readable heading");
     expect(data.textContent).toContain("visual libraries");
+  });
+
+  it("detects browser verification pages", () => {
+    expect(detectVerificationBlock({ title: "Just a moment...", textContent: "Checking your browser before accessing linux.do Cloudflare Ray ID" })).toBe("cloudflare_verification");
+    expect(detectVerificationBlock({ title: "Verify you are human", textContent: "Please verify you are human to continue" })).toBe("human_verification");
+    expect(detectVerificationBlock({ title: "Normal article", textContent: "This is a regular page about Linux and self-hosting." })).toBeNull();
   });
 });

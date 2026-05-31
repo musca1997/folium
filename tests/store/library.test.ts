@@ -88,4 +88,19 @@ describe("library store", () => {
     expect(await store.listBlocks()).toHaveLength(1);
     expect(results.filter((result) => result.created)).toHaveLength(1);
   });
+
+  it("stores manual content and queues analysis", async () => {
+    const store = createLibraryStore({ dataDir: dir, enableNetwork: false });
+    const block = await store.createUrlBlock("https://linux.do/t/example");
+
+    const updated = await store.setManualContent(block.id, "Manual title", "This is manually pasted content about Linux, forums, and self-hosting.".repeat(8));
+    const jobs = await store.listJobs();
+
+    expect(updated.title).toBe("Manual title");
+    expect(updated.contentText).toContain("manually pasted content");
+    expect(updated.metadata.extractionMethod).toBe("manual");
+    expect(updated.metadata.extractionBlockedReason).toBeUndefined();
+    expect(updated.status).toBe("thinking");
+    expect(jobs.some((job) => job.blockId === block.id && job.type === "analyze_block" && job.status === "queued")).toBe(true);
+  });
 });

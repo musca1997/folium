@@ -2,7 +2,7 @@ import { constants } from "node:fs";
 import { mkdir, open, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { browserExtractPage } from "@/lib/ingest/browserExtract";
-import { fetchAndExtractPage } from "@/lib/ingest/extract";
+import { detectVerificationBlock, fetchAndExtractPage } from "@/lib/ingest/extract";
 import { analyzeUrl, getAnalysisProviderName } from "@/lib/ingest/process";
 import { captureScreenshot } from "@/lib/ingest/screenshot";
 import { canonicalizeUrl, getDomain, getUrlDuplicateKey, normalizeUrl, slugifyNodeName } from "@/lib/ingest/url";
@@ -319,6 +319,26 @@ export function createLibraryStore(options: StoreOptions = {}) {
       });
     },
 
+    async setManualContent(id: string, title: string, contentText: string): Promise<Block> {
+      const text = contentText.replace(/\s+/g, " ").trim();
+      if (text.length < 20) throw new Error("Manual content is too short");
+      return updateData((data) => {
+        const block = data.blocks.find((item) => item.id === id);
+        if (!block) throw new Error(`Block not found: ${id}`);
+        const timestamp = nowIso();
+        const cleanTitle = title.trim();
+        if (cleanTitle) block.title = cleanTitle;
+        block.contentText = text;
+        block.contentHtml = "";
+        block.status = "thinking";
+        block.metadata = { ...block.metadata, extractionMethod: "manual", extractionBlockedReason: undefined, extractionError: undefined };
+        block.updatedAt = timestamp;
+        const existing = data.jobs.find((job) => job.blockId === id && job.type === "analyze_block" && ["queued", "running"].includes(job.status));
+        if (!existing) data.jobs.push({ id: makeId("job"), type: "analyze_block", blockId: id, status: "queued", error: null, attempts: 0, maxAttempts: maxJobAttempts, claimedAt: null, lastError: null, lastErrorAt: null, errorHistory: [], createdAt: timestamp, updatedAt: timestamp });
+        return block;
+      });
+    },
+
     async deleteBlock(id: string): Promise<void> {
       await updateData((data) => {
         const index = data.blocks.findIndex((item) => item.id === id);
@@ -439,20 +459,27 @@ export function createLibraryStore(options: StoreOptions = {}) {
       if (enableNetwork) {
         try {
           const extracted = await fetchAndExtractPage(block.url);
+          const blockedReason = detectVerificationBlock({ title: extracted.title, textContent: extracted.textContent });
+          if (blockedReason) throw new Error(`Verification required: ${blockedReason}`);
           if (extracted.textContent.length < 300) throw new Error(`Fetch extraction produced too little text (${extracted.textContent.length} chars)`);
-          block.title = extracted.title || block.domain; block.description = extracted.description; block.previewImage = extracted.previewImage; block.favicon = extracted.favicon; block.contentText = extracted.textContent; block.contentHtml = extracted.htmlContent; block.metadata = { ...block.metadata, canonicalUrl: extracted.canonicalUrl, extractionMethod: "fetch", extractionError: undefined };
+          block.title = extracted.title || block.domain; block.description = extracted.description; block.previewImage = extracted.previewImage; block.favicon = extracted.favicon; block.contentText = extracted.textContent; block.contentHtml = extracted.htmlContent; block.metadata = { ...block.metadata, canonicalUrl: extracted.canonicalUrl, extractionMethod: "fetch", extractionBlockedReason: undefined, extractionError: undefined };
         } catch (error) {
           const fetchError = error instanceof Error ? error.message : "Unknown extraction error";
           try {
             const extracted = await browserExtractPage(block.url);
-            block.title = extracted.title || block.domain; block.description = extracted.description; block.previewImage = extracted.previewImage; block.favicon = extracted.favicon; block.contentText = extracted.textContent; block.contentHtml = extracted.htmlContent; block.metadata = { ...block.metadata, canonicalUrl: extracted.canonicalUrl, extractionMethod: "browser", fetchExtractionError: fetchError, extractionError: undefined, browserExtractionTextLength: extracted.textContent.length };
+            const blockedReason = detectVerificationBlock({ title: extracted.title, textContent: extracted.textContent });
+            if (blockedReason) throw new Error(`Verification required: ${blockedReason}`);
+            block.title = extracted.title || block.domain; block.description = extracted.description; block.previewImage = extracted.previewImage; block.favicon = extracted.favicon; block.contentText = extracted.textContent; block.contentHtml = extracted.htmlContent; block.metadata = { ...block.metadata, canonicalUrl: extracted.canonicalUrl, extractionMethod: "browser", extractionBlockedReason: undefined, fetchExtractionError: fetchError, extractionError: undefined, browserExtractionTextLength: extracted.textContent.length };
           } catch (browserError) {
-            block.metadata = { ...block.metadata, extractionMethod: "fallback", extractionError: browserError instanceof Error ? browserError.message : "Unknown browser extraction error", fetchExtractionError: fetchError, canonicalUrl: block.url };
+            const browserMessage = browserError instanceof Error ? browserError.message : "Unknown browser extraction error";
+            const match = browserMessage.match(/Verification required: ([a-z_]+)/);
+            block.metadata = { ...block.metadata, extractionMethod: "fallback", extractionError: browserMessage, extractionBlockedReason: match?.[1], fetchExtractionError: fetchError, canonicalUrl: block.url };
           }
         }
         block.status = "screenshotting"; block.updatedAt = nowIso(); await writeData(data);
         const screenshot = await captureScreenshot(block.url, block.id); if (screenshot.path) block.screenshotPath = screenshot.path; if (screenshot.error) block.metadata = { ...block.metadata, screenshotError: screenshot.error }; else block.metadata = { ...block.metadata, screenshotError: undefined };
       }
+      if (typeof block.metadata.extractionBlockedReason === "string") block.status = "failed";
       block.updatedAt = nowIso(); await writeData(data); return block;
     },
 
@@ -492,7 +519,8 @@ export function createLibraryStore(options: StoreOptions = {}) {
     },
 
     async processBlock(id: string): Promise<Block> {
-      await this.extractAndCaptureBlock(id);
+      const block = await this.extractAndCaptureBlock(id);
+      if (typeof block.metadata.extractionBlockedReason === "string") throw new Error(`Verification required: ${block.metadata.extractionBlockedReason}`);
       return this.analyzeBlock(id);
     },
   };

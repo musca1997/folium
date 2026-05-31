@@ -165,6 +165,21 @@ export async function recaptureBlockAction(formData: FormData) {
   redirect(`/blocks/${id}`);
 }
 
+export async function setManualContentAction(formData: FormData) {
+  await requireAuthAndCsrf(formData, "/login");
+  const id = String(formData.get("id") ?? "");
+  if (!id) redirect("/");
+  const title = String(formData.get("manualTitle") ?? "");
+  const content = String(formData.get("manualContent") ?? "");
+  try {
+    await libraryStore.setManualContent(id, title, content);
+  } catch {
+    redirect(`/blocks/${id}?manual=too-short`);
+  }
+  for (const path of [`/blocks/${id}`, "/processing", "/topics", "/nodes", "/graph", "/search"]) revalidatePath(path);
+  redirect(`/blocks/${id}`);
+}
+
 function taxonomyRevalidate() {
   for (const path of ["/taxonomy", "/topics", "/nodes", "/graph", "/search", "/"]) revalidatePath(path);
 }

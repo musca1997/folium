@@ -6,7 +6,7 @@ import { NodeChips } from "@/components/NodeChips";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { EvidenceList } from "@/components/EvidenceList";
 import { ProcessingTimeline } from "@/components/ProcessingTimeline";
-import { deleteBlockAction, recaptureBlockAction, reprocessBlockWithAiAction, retryBlockProcessingAction, toggleBlockPinAction, updateBlockAction } from "@/app/actions";
+import { deleteBlockAction, recaptureBlockAction, reprocessBlockWithAiAction, retryBlockProcessingAction, setManualContentAction, toggleBlockPinAction, updateBlockAction } from "@/app/actions";
 import { getCsrfToken, isAuthenticated } from "@/lib/auth";
 import { libraryStore } from "@/lib/store/library";
 import { getWorkerHeartbeat } from "@/lib/workerHeartbeat";
@@ -24,6 +24,7 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
   if (!block) notFound();
   const latestJob = jobs.filter((job) => job.blockId === block.id).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0] ?? null;
   const csrf = authed ? await getCsrfToken() : "";
+  const blockedReason = typeof block.metadata?.extractionBlockedReason === "string" ? block.metadata.extractionBlockedReason : null;
 
   return (
     <>
@@ -47,6 +48,27 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
                 {block.url}
               </a>
             </div>
+            {authed && blockedReason ? (
+              <div className="mt-5 border border-line p-4">
+                <p className="text-xs uppercase tracking-wide text-muted">Manual content</p>
+                <p className="mt-3 text-sm leading-relaxed text-muted">
+                  Folium could not read this page because it appears to require browser verification or login. Open the source page, copy the useful text, and paste it here to continue AI analysis.
+                </p>
+                <form action={setManualContentAction} className="mt-4 space-y-3">
+                  <input type="hidden" name="csrf" value={csrf} />
+                  <input type="hidden" name="id" value={block.id} />
+                  <label className="block text-xs text-muted">
+                    Title
+                    <input name="manualTitle" defaultValue={block.title} className="mt-1 w-full border border-line px-2 py-1.5 text-sm text-ink outline-none focus:border-ink" />
+                  </label>
+                  <label className="block text-xs text-muted">
+                    Readable text
+                    <textarea name="manualContent" rows={8} placeholder="Paste the readable page text here..." className="mt-1 w-full resize-y border border-line px-2 py-1.5 text-sm text-ink outline-none focus:border-ink" />
+                  </label>
+                  <button type="submit" className="border border-ink px-3 py-1.5 text-sm hover:bg-ink hover:text-white">Use pasted text</button>
+                </form>
+              </div>
+            ) : null}
             {authed ? (
               <div className="mt-5 border border-line p-4">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -118,6 +140,12 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
           </section>
           <aside className="space-y-5">
             {authed ? <ProcessingTimeline block={block} job={latestJob} heartbeat={heartbeat} /> : null}
+            {authed && blockedReason ? (
+              <div className="border border-line p-4 text-sm text-muted">
+                <p className="mb-2 text-xs uppercase tracking-wide text-muted">Verification required</p>
+                <p>This page appears to require browser verification or login. Retry later, or paste readable text manually.</p>
+              </div>
+            ) : null}
             <div className="border border-line p-4 text-sm">
               <p className="mb-3 text-xs uppercase tracking-wide text-muted">Details</p>
               <dl className="space-y-3">
