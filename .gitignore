@@ -1,0 +1,16 @@
+node_modules
+.next
+.env
+.env.local
+.env.*.local
+coverage
+.DS_Store
+tsconfig.tsbuildinfo
+
+# Local Folium state and secrets
+data/*.json
+data/screenshots/
+public/screenshots/
+
+# Keep placeholder files if added later
+!data/.gitkeep

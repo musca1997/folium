@@ -1,0 +1,41 @@
+{
+  "name": "folium",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint",
+    "worker": "tsx -r tsconfig-paths/register scripts/worker.ts",
+    "worker:once": "tsx -r tsconfig-paths/register scripts/worker.ts --once",
+    "dev:all": "bash scripts/dev-all.sh",
+    "start:all": "bash scripts/start-all.sh"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "jsdom": "^29.1.1",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^28.0.3",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "autoprefixer": "latest",
+    "eslint": "latest",
+    "eslint-config-next": "latest",
+    "playwright": "^1.60.0",
+    "postcss": "latest",
+    "tailwindcss": "^3.4.17",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.22.3",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}

@@ -1,0 +1,26 @@
+services:
+  web:
+    build: .
+    command: npm run start -- -H 0.0.0.0 -p 3000
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    volumes:
+      - folium-data:/app/data
+      - folium-screenshots:/app/data/screenshots
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: npm run worker
+    env_file:
+      - .env.local
+    volumes:
+      - folium-data:/app/data
+      - folium-screenshots:/app/data/screenshots
+    restart: unless-stopped
+
+volumes:
+  folium-data:
+  folium-screenshots:
