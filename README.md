@@ -14,23 +14,23 @@ Demo: https://folium.fyi/
 
 ### Library
 
-![Folium visual library](docs/screenshots/library.png)
+![Folium visual library](docs/screenshots/library.png?v=20260601)
 
 ### Block detail
 
-![Folium block detail](docs/screenshots/block-detail.png)
+![Folium block detail](docs/screenshots/block-detail.png?v=20260601)
 
 ### Topics and nodes
 
-![Folium topics](docs/screenshots/topics.png)
+![Folium topics](docs/screenshots/topics.png?v=20260601)
 
 ### Graph
 
-![Folium graph](docs/screenshots/graph.png)
+![Folium graph](docs/screenshots/graph.png?v=20260601)
 
 ### Search
 
-![Folium search](docs/screenshots/search.png)
+![Folium search](docs/screenshots/search.png?v=20260601)
 
 ## Features
 
@@ -129,6 +129,24 @@ Generate Agent API tokens in Settings. Use them for the CLI, Web Clipper, HTTP A
 - Bulk import/export, richer document extraction, and semantic search are still on the roadmap.
 
 ## Roadmap
+
+Completed foundation:
+
+- [x] Authenticated HTTP API for blocks, search, status, extraction, visibility, and pinning.
+- [x] In-repo CLI under `packages/cli` for save/search/get/extract/curation workflows.
+- [x] CLI docs, agent skill, and project `AGENTS.md`.
+- [x] Experimental stdio MCP server.
+- [x] Chrome/Chromium and Firefox Folium Web Clipper.
+- [x] Named Agent API tokens with created-at, last-used-at, and revoke controls.
+- [x] Private-by-default saves and public/private filtering across library, search, topics, graph, screenshots, and API output.
+- [x] Protected screenshots, WebP thumbnails, lazy loading, and stable library grid ordering.
+- [x] Duplicate URL detection, canonicalization, and duplicate-save resurfacing.
+- [x] Atomic JSON writes, file locking, stale job recovery, retry metadata, and worker heartbeat.
+- [x] Stronger password hashing, login rate limiting, CSRF protection, and SSRF URL checks.
+- [x] Backup/restore UI.
+- [x] Manual content fallback and browser-provided clipping for blocked/login-gated pages.
+- [x] Topics/nodes browse page, standalone search page, graph view, pinning, and processing controls.
+- [x] Coarse domain topic coverage and topic/node tag display on cards.
 
 Near term:
 

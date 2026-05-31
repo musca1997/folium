@@ -14,23 +14,23 @@ Folium 会保存链接、抽取可读正文、捕获视觉预览、总结页面�
 
 ### Library
 
-![Folium visual library](docs/screenshots/library.png)
+![Folium visual library](docs/screenshots/library.png?v=20260601)
 
 ### Block 详情
 
-![Folium block detail](docs/screenshots/block-detail.png)
+![Folium block detail](docs/screenshots/block-detail.png?v=20260601)
 
 ### Topics 与 Nodes
 
-![Folium topics](docs/screenshots/topics.png)
+![Folium topics](docs/screenshots/topics.png?v=20260601)
 
 ### Graph
 
-![Folium graph](docs/screenshots/graph.png)
+![Folium graph](docs/screenshots/graph.png?v=20260601)
 
 ### Search
 
-![Folium search](docs/screenshots/search.png)
+![Folium search](docs/screenshots/search.png?v=20260601)
 
 ## 功能
 
@@ -129,6 +129,24 @@ npx playwright install chromium
 - 批量导入/导出、更丰富的文档抽取和语义搜索仍在路线图中。
 
 ## Roadmap
+
+已完成基础能力：
+
+- [x] 为 blocks、search、status、extraction、visibility 和 pinning 添加认证 HTTP API。
+- [x] 在 `packages/cli` 下添加 repo 内 CLI，支持 save/search/get/extract/curation 工作流。
+- [x] 添加 CLI docs、agent skill 和项目级 `AGENTS.md`。
+- [x] 添加实验性 stdio MCP server。
+- [x] 添加 Chrome/Chromium 与 Firefox Folium Web Clipper。
+- [x] 添加命名 Agent API tokens，包含 created-at、last-used-at 和 revoke 控制。
+- [x] 默认私有保存，并在 library、search、topics、graph、screenshots 和 API 输出中实现 public/private 过滤。
+- [x] 添加受保护截图、WebP 缩略图、lazy loading 和稳定 library grid 排序。
+- [x] 添加重复 URL 检测、canonicalization 和重复保存回到首页前排。
+- [x] 添加 atomic JSON writes、file locking、stale job recovery、retry metadata 和 worker heartbeat。
+- [x] 添加更强密码哈希、登录限流、CSRF 保护和 SSRF URL 检查。
+- [x] 添加 Backup/restore UI。
+- [x] 为 blocked/login-gated 页面添加手动内容 fallback 和浏览器提供内容的 clipping。
+- [x] 添加 Topics/Nodes 浏览页、独立 Search 页、Graph 视图、pinning 和 processing controls。
+- [x] 添加粗粒度 domain topic coverage，并在卡片上显示 topic/node tags。
 
 近期：
 
