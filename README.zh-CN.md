@@ -182,7 +182,7 @@ Folium 使用 Apache License, Version 2.0 授权。详情见 [LICENSE](./LICENSE
 
 ## Roadmap
 
-近期：
+已完成的基础能力：
 
 - [x] 为 blocks、search 和 processing status 添加认证 HTTP API。
 - [x] 在 `packages/cli` 下添加 repo 内置的 `folium` CLI，用于 agent-friendly 的 save/search/get 工作流。
@@ -192,27 +192,58 @@ Folium 使用 Apache License, Version 2.0 授权。详情见 [LICENSE](./LICENSE
 - [x] 添加 extract-without-saving API 和 CLI 命令。
 - [x] 添加 CLI pin/unpin 和 public/private 策展命令。
 - [x] 探索面向 Claude Code、Codex、OpenClaw、Pi 和其他 agent 工具的 MCP server 支持。
-- [ ] 添加 Library list view，作为视觉网格以外的高密度浏览方式。
-- [ ] 更详细的 worker health checks 和 stuck-job recovery。
-- [ ] 每个 block 更透明的抽取日志与 retry diagnostics。
-- [ ] 完成分类管理 UI，包括 rename、aliases、merge、delete 和 canonical review flows。
-- [ ] 浏览器 bookmarklet / extension，实现一键保存。
-- [ ] 支持 Netscape bookmarks、JSON、Markdown、Linkding、Raindrop 和类似工具的导入/导出。
-- [ ] 可配置 AI style prompt、首选语言和分类粒度。
 
-存储与搜索：
+可靠性与部署：
+
+- [ ] 为 library/job 存储添加 atomic JSON writes 和 file locking。
+- [ ] 在可配置超时后重置 stale running jobs。
+- [ ] 为 processing jobs 添加 retry policy、max attempts 和 last-error history。
+- [ ] 添加更丰富的 worker health checks 与 processing diagnostics。
+- [ ] 为 web 和 worker 添加更适合生产环境的 Docker health checks。
+- [ ] 添加 systemd units 示例。
+- [ ] 添加 Caddy/nginx reverse-proxy 示例和单用户公网托管指南。
+- [ ] 添加带 retention settings 的定时本地备份。
+
+数据质量与策展：
+
+- [ ] 创建 blocks 前添加重复 URL 检测和 canonical URL 匹配。
+- [ ] 添加 URL canonicalization 规则，用于处理 tracking parameters、canonical links 和规范化 domains。
+- [ ] 添加等价 blocks 的重复合并工具。
+- [ ] 为每个 block 存储 fetch、browser fallback、screenshot 和 AI analysis 的 extraction events。
+- [ ] 在登录态 block 页面展示 provider/model、retry history 和紧凑 processing logs。
+- [ ] 完成分类管理 UI，包括 rename、aliases、merge、delete 和 canonical review flows。
+- [ ] 分类建议影响全局图谱前，添加人工 review workflow。
+- [ ] 添加可配置 AI style prompt、首选语言和分类粒度。
+
+Agent API、CLI 与集成：
+
+- [ ] 为 API routes 和 CLI commands 添加自动化测试。
+- [ ] 打包 Folium CLI，支持本地安装和 npm 发布。
+- [ ] 添加 named API tokens，包含 created-at、last-used-at 和 revoke 控制。
+- [ ] 添加可选 API token scopes，如 read-only、write 和 admin actions。
+- [ ] 为 token-authenticated requests 添加 API 限流。
+- [ ] 添加带 curl 示例的 API reference 文档。
+- [ ] 添加面向 Claude Code、Codex、OpenClaw、Pi 和 shell scripts 的 agent workflow 示例。
+- [ ] 添加 MCP client configuration 示例文档。
+
+浏览与链接库工作流：
+
+- [ ] 添加 Library list view，作为视觉网格以外的高密度浏览方式。
+- [ ] 为选中的 blocks 添加批量操作：pin、unpin、public、private、delete 和 reprocess。
+- [ ] 添加一键保存用的浏览器 bookmarklet。
+- [ ] API 稳定后添加最小浏览器扩展。
+- [ ] 支持 Netscape bookmarks、JSON、Markdown、Linkding、Raindrop 和类似工具的导入/导出。
+- [ ] 添加用于完整 library 迁移的 JSON export/import。
+- [ ] 添加针对 selected blocks、topics 和 nodes 的 Markdown export。
+
+搜索、图谱与存储：
 
 - [ ] 从 JSON 存储迁移到 SQLite 或 Postgres。
 - [ ] 添加全文搜索索引。
 - [ ] 添加 embeddings 和语义搜索，可能使用 pgvector 或本地向量索引。
-- [ ] 添加更安全的队列锁和 stuck-job recovery。
-
-知识图谱与策展：
-
-- [ ] 更好地抽取 nodes、topics 和 saved sources 之间的边。
-- [ ] 带有更清晰 provenance 和 confidence 的 evidence-backed claims。
-- [ ] 图谱搜索、hover highlighting、选中节点 1-hop/2-hop 模式，以及隐藏低信号节点。
-- [ ] 分类建议影响全局图谱前的人工 review workflow。
+- [ ] 改进 nodes、topics 和 saved sources 之间的边抽取。
+- [ ] 添加带有更清晰 provenance 和 confidence 的 evidence-backed claims。
+- [ ] 添加图谱搜索、hover highlighting、选中节点 1-hop/2-hop 模式，以及隐藏低信号节点。
 
 内容支持：
 
@@ -222,9 +253,8 @@ Folium 使用 Apache License, Version 2.0 授权。详情见 [LICENSE](./LICENSE
 - [ ] 针对困难网站改进浏览器渲染抽取。
 - [ ] 可选的 local-first readable HTML/text 归档。
 
-部署与产品加固：
+更长期的产品方向：
 
-- [ ] 更好的 Docker health checks。
-- [ ] systemd units 示例。
-- [ ] 更强的生产环境安全指导。
+- [ ] 为公开部署添加 read-only demo mode。
+- [ ] 添加更强的生产环境安全指导。
 - [ ] 单用户体验稳定后，考虑可选的多用户或团队模型。

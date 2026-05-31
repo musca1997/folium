@@ -182,7 +182,7 @@ Folium is licensed under the Apache License, Version 2.0. See [LICENSE](./LICENS
 
 ## Roadmap
 
-Near-term:
+Completed foundation:
 
 - [x] Add authenticated HTTP API for blocks, search, and processing status.
 - [x] Add an in-repo `folium` CLI under `packages/cli` for agent-friendly save/search/get workflows.
@@ -192,27 +192,58 @@ Near-term:
 - [x] Add extract-without-saving API and CLI command.
 - [x] Add CLI pin/unpin and public/private curation commands.
 - [x] Explore MCP server support for Claude Code, Codex, OpenClaw, Pi, and other agent tools.
-- [ ] Add a Library list view alongside the visual grid for denser browsing.
-- [ ] More detailed worker health checks and stuck-job recovery.
-- [ ] More transparent extraction logs and retry diagnostics per block.
-- [ ] Finish taxonomy management UI for rename, aliases, merge, delete, and canonical review flows.
-- [ ] Browser bookmarklet / extension for one-click saving.
-- [ ] Import/export for Netscape bookmarks, JSON, Markdown, Linkding, Raindrop, and similar tools.
-- [ ] Configurable AI style prompt, preferred language, and taxonomy granularity.
 
-Storage and search:
+Reliability and deployment:
+
+- [ ] Add atomic JSON writes and file locking for library/job storage.
+- [ ] Reset stale running jobs after a configurable timeout.
+- [ ] Add retry policy, max attempts, and last-error history for processing jobs.
+- [ ] Add richer worker health checks and processing diagnostics.
+- [ ] Add production-ready Docker health checks for web and worker.
+- [ ] Add example systemd units.
+- [ ] Add Caddy/nginx reverse-proxy examples and a single-user public hosting guide.
+- [ ] Add scheduled local backups with retention settings.
+
+Data quality and curation:
+
+- [ ] Add duplicate URL detection and canonical URL matching before creating new blocks.
+- [ ] Add URL canonicalization rules for tracking parameters, canonical links, and normalized domains.
+- [ ] Add duplicate merge tools for equivalent blocks.
+- [ ] Store per-block extraction events for fetch, browser fallback, screenshot, and AI analysis.
+- [ ] Show provider/model, retry history, and compact processing logs on authenticated block pages.
+- [ ] Finish taxonomy management UI for rename, aliases, merge, delete, and canonical review flows.
+- [ ] Add manual review workflow for taxonomy suggestions before they affect the global graph.
+- [ ] Add configurable AI style prompt, preferred language, and taxonomy granularity.
+
+Agent API, CLI, and integrations:
+
+- [ ] Add automated tests for API routes and CLI commands.
+- [ ] Package the Folium CLI for local install and npm publishing.
+- [ ] Add named API tokens with created-at, last-used-at, and revoke controls.
+- [ ] Add optional API token scopes for read-only, write, and admin actions.
+- [ ] Add API rate limiting for token-authenticated requests.
+- [ ] Add API reference documentation with curl examples.
+- [ ] Add agent workflow examples for Claude Code, Codex, OpenClaw, Pi, and shell scripts.
+- [ ] Add documented MCP client configuration examples.
+
+Browsing and library workflows:
+
+- [ ] Add a Library list view alongside the visual grid for denser browsing.
+- [ ] Add bulk actions for selected blocks: pin, unpin, public, private, delete, and reprocess.
+- [ ] Add browser bookmarklet for one-click saving.
+- [ ] Add a minimal browser extension after the API stabilizes.
+- [ ] Add import/export for Netscape bookmarks, JSON, Markdown, Linkding, Raindrop, and similar tools.
+- [ ] Add JSON export/import for full library migration.
+- [ ] Add Markdown export for selected blocks, topics, and nodes.
+
+Search, graph, and storage:
 
 - [ ] Move from JSON storage to SQLite or Postgres.
 - [ ] Add full-text search indexes.
 - [ ] Add embeddings and semantic search, likely with pgvector or a local vector index.
-- [ ] Add safer queue locking and stuck-job recovery.
-
-Knowledge graph and curation:
-
-- [ ] Better edge extraction between nodes, topics, and saved sources.
-- [ ] Evidence-backed claims with clearer provenance and confidence.
-- [ ] Graph search, hover highlighting, selected-node 1-hop/2-hop mode, and low-signal node hiding.
-- [ ] Manual review workflow for taxonomy suggestions before they affect the global graph.
+- [ ] Improve edge extraction between nodes, topics, and saved sources.
+- [ ] Add evidence-backed claims with clearer provenance and confidence.
+- [ ] Add graph search, hover highlighting, selected-node 1-hop/2-hop mode, and low-signal node hiding.
 
 Content support:
 
@@ -222,9 +253,8 @@ Content support:
 - [ ] Browser-rendered extraction improvements for difficult sites.
 - [ ] Optional local-first archiving of readable HTML/text.
 
-Deployment and product hardening:
+Longer-term product direction:
 
-- [ ] Better Docker health checks.
-- [ ] Example systemd units.
-- [ ] Stronger production security guidance.
-- [ ] Optional multi-user or team model after the single-user experience is stable.
+- [ ] Add a read-only demo mode for public deployments.
+- [ ] Add stronger production security guidance.
+- [ ] Consider an optional multi-user or team model after the single-user experience is stable.
