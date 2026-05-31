@@ -40,11 +40,21 @@ export default function AboutPage() {
             Folium is currently designed as a single-user self-hosted app. Public browsing can be enabled for public blocks, while adding,
             editing, processing, account settings, API tokens, and private content require login.
           </p>
-          <div className="mt-5 flex flex-wrap gap-2 text-sm">
-            <Link href="/" className="border border-ink px-3 py-2 hover:bg-ink hover:text-white">Open library</Link>
-            <Link href="/agents" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">Agents</Link>
-            <Link href="https://github.com/musca1997/folium" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">GitHub</Link>
-          </div>
+        </section>
+
+        <section className="mt-8 grid gap-6 md:grid-cols-2">
+          <Link href="/agents" className="border border-line p-5 hover:bg-soft">
+            <p className="text-xs uppercase tracking-wide text-muted">Agents</p>
+            <p className="mt-3 text-sm leading-relaxed text-muted">
+              Let coding agents deploy Folium for you, then use the CLI/API to save, search, extract, and curate your library.
+            </p>
+          </Link>
+          <Link href="https://github.com/musca1997/folium" className="border border-line p-5 hover:bg-soft">
+            <p className="text-xs uppercase tracking-wide text-muted">GitHub</p>
+            <p className="mt-3 text-sm leading-relaxed text-muted">
+              Read the source, deployment notes, roadmap, CLI docs, and self-hosting guidance for the public preview.
+            </p>
+          </Link>
         </section>
       </main>
     </>
