@@ -73,6 +73,61 @@ export default function AboutPage() {
           </div>
         </section>
 
+        <section id="clipper" className="mt-12 scroll-mt-20 border-t border-line pt-8">
+          <PageIntro
+            eyebrow="Browser extension"
+            title="Clip pages from your own browser."
+            description="Use the Folium Web Clipper to save pages that your browser can see, including login-gated forums, verification-gated pages, private docs, and selected passages."
+          />
+
+          <section className="grid gap-6 md:grid-cols-3">
+            <div className="border border-line p-5">
+              <p className="text-xs uppercase tracking-wide text-muted">Configure</p>
+              <p className="mt-3 text-sm leading-relaxed text-muted">
+                Generate an Agent API token in Settings, give it a note such as Chrome extension or Firefox extension, then save the Folium URL and token in the extension popup.
+              </p>
+            </div>
+            <div className="border border-line p-5">
+              <p className="text-xs uppercase tracking-wide text-muted">Save</p>
+              <p className="mt-3 text-sm leading-relaxed text-muted">
+                Click Save page to send the current URL, title, readable page text, metadata, HTML, and a visible-tab screenshot to Folium.
+              </p>
+            </div>
+            <div className="border border-line p-5">
+              <p className="text-xs uppercase tracking-wide text-muted">Select</p>
+              <p className="mt-3 text-sm leading-relaxed text-muted">
+                Highlight text first, then choose Save selection to keep a specific passage while preserving the original source URL and screenshot.
+              </p>
+            </div>
+          </section>
+
+          <section className="mt-8 border border-line p-6">
+            <h2 className="text-xl font-normal tracking-tight">Install the Web Clipper</h2>
+            <div className="mt-5 grid gap-6 md:grid-cols-2">
+              <div className="border border-line p-5">
+                <p className="text-xs uppercase tracking-wide text-muted">Chrome / Chromium</p>
+                <p className="mt-3 text-sm leading-relaxed text-muted">
+                  Build the extension, open chrome://extensions, enable Developer mode, choose Load unpacked, and select the Chrome build directory.
+                </p>
+                <pre className="mt-4 overflow-x-auto border border-line bg-soft p-3 text-xs text-ink"><code>{`npm run extension:build
+packages/extension/dist-chrome`}</code></pre>
+              </div>
+              <div className="border border-line p-5">
+                <p className="text-xs uppercase tracking-wide text-muted">Firefox</p>
+                <p className="mt-3 text-sm leading-relaxed text-muted">
+                  Build the extension, open about:debugging, load a temporary add-on, and select the Firefox manifest. Temporary add-ons are removed when Firefox restarts.
+                </p>
+                <pre className="mt-4 overflow-x-auto border border-line bg-soft p-3 text-xs text-ink"><code>{`npm run extension:build
+packages/extension/dist-firefox/manifest.json`}</code></pre>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2 text-sm">
+              <Link href="https://github.com/musca1997/folium/blob/master/docs/extension.md" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">Extension docs</Link>
+              <Link href="/settings" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">Generate token</Link>
+            </div>
+          </section>
+        </section>
+
         <section id="agents" className="mt-12 scroll-mt-20 border-t border-line pt-8">
           <PageIntro
             eyebrow="Agent-friendly self-hosting"
