@@ -11,6 +11,16 @@ import type { Block, BlockNodeLink, BlockTopicLink, BlockVisibility, CurationSta
 
 type StoreOptions = { dataDir?: string; enableNetwork?: boolean; staleJobTimeoutMs?: number; maxJobAttempts?: number };
 type AddUrlBlockResult = { block: Block; created: boolean; duplicate: boolean };
+type ProvidedContentInput = {
+  title?: string;
+  description?: string;
+  contentText: string;
+  contentHtml?: string;
+  canonicalUrl?: string;
+  previewImage?: string | null;
+  favicon?: string | null;
+  extractionMethod: "manual" | "browser_extension";
+};
 
 const defaultData: LibraryData = { blocks: [], nodes: [], topics: [], jobs: [] };
 const DEFAULT_STALE_JOB_TIMEOUT_MS = 15 * 60_000;
@@ -319,24 +329,32 @@ export function createLibraryStore(options: StoreOptions = {}) {
       });
     },
 
-    async setManualContent(id: string, title: string, contentText: string): Promise<Block> {
-      const text = contentText.replace(/\s+/g, " ").trim();
-      if (text.length < 20) throw new Error("Manual content is too short");
+    async setProvidedContent(id: string, input: ProvidedContentInput): Promise<Block> {
+      const text = input.contentText.replace(/\s+/g, " ").trim();
+      if (text.length < 20) throw new Error("Provided content is too short");
       return updateData((data) => {
         const block = data.blocks.find((item) => item.id === id);
         if (!block) throw new Error(`Block not found: ${id}`);
         const timestamp = nowIso();
-        const cleanTitle = title.trim();
+        const cleanTitle = input.title?.trim();
+        const cleanDescription = input.description?.trim();
         if (cleanTitle) block.title = cleanTitle;
+        if (cleanDescription !== undefined) block.description = cleanDescription;
+        if (input.previewImage !== undefined) block.previewImage = input.previewImage;
+        if (input.favicon !== undefined) block.favicon = input.favicon;
         block.contentText = text;
-        block.contentHtml = "";
+        block.contentHtml = input.contentHtml?.trim() ?? "";
         block.status = "thinking";
-        block.metadata = { ...block.metadata, extractionMethod: "manual", extractionBlockedReason: undefined, extractionError: undefined };
+        block.metadata = { ...block.metadata, canonicalUrl: input.canonicalUrl?.trim() || block.metadata.canonicalUrl || block.url, extractionMethod: input.extractionMethod, extractionBlockedReason: undefined, extractionError: undefined };
         block.updatedAt = timestamp;
         const existing = data.jobs.find((job) => job.blockId === id && job.type === "analyze_block" && ["queued", "running"].includes(job.status));
         if (!existing) data.jobs.push({ id: makeId("job"), type: "analyze_block", blockId: id, status: "queued", error: null, attempts: 0, maxAttempts: maxJobAttempts, claimedAt: null, lastError: null, lastErrorAt: null, errorHistory: [], createdAt: timestamp, updatedAt: timestamp });
         return block;
       });
+    },
+
+    async setManualContent(id: string, title: string, contentText: string): Promise<Block> {
+      return this.setProvidedContent(id, { title, contentText, extractionMethod: "manual" });
     },
 
     async deleteBlock(id: string): Promise<void> {

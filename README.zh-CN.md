@@ -82,7 +82,7 @@ Folium 会把保存的链接转化为结构化参考资料：抽取可读正文�
 - 即使有浏览器回退，部分网站仍可能阻止内容抽取或截图。
 - 分类管理 UI 已有实验版本，但尚未暴露在主导航中。
 - 已实现 public/private 过滤，但暴露到公网的部署仍应谨慎对待。
-- 浏览器扩展、批量导入、导出流程和更丰富的文档抽取尚未实现。
+- 批量导入、导出流程和更丰富的文档抽取尚未实现。
 
 ## 本地开发
 
@@ -99,8 +99,7 @@ npm run dev:all
 
 - `/` — 视觉链接库
 - `/add` — 保存 URL
-- `/search` — 关键词搜索
-- `/nodes` — 生成的 Wiki 节点
+- `/nodes` — 搜索和生成的 Wiki 节点
 - `/graph` — block-node 图谱摘要
 - `/processing` — 排队/运行中/完成/失败的任务
 
@@ -144,6 +143,7 @@ npm run dev:all
 npm run start:all
 npm run worker
 npm run worker:once
+npm run extension:build
 ```
 
 ## 环境变量
@@ -217,6 +217,7 @@ Folium 使用 Apache License, Version 2.0 授权。详情见 [LICENSE](./LICENSE
 
 Agent API、CLI 与集成：
 
+- [x] 添加浏览器扩展 / web clipper，用于保存登录墙和浏览器验证页面。
 - [ ] 为 API routes 和 CLI commands 添加自动化测试。
 - [ ] 打包 Folium CLI，支持本地安装和 npm 发布。
 - [ ] 添加 named API tokens，包含 created-at、last-used-at 和 revoke 控制。
@@ -231,7 +232,6 @@ Agent API、CLI 与集成：
 - [ ] 添加 Library list view，作为视觉网格以外的高密度浏览方式。
 - [ ] 为选中的 blocks 添加批量操作：pin、unpin、public、private、delete 和 reprocess。
 - [ ] 添加一键保存用的浏览器 bookmarklet。
-- [ ] API 稳定后添加最小浏览器扩展。
 - [ ] 支持 Netscape bookmarks、JSON、Markdown、Linkding、Raindrop 和类似工具的导入/导出。
 - [ ] 添加用于完整 library 迁移的 JSON export/import。
 - [ ] 添加针对 selected blocks、topics 和 nodes 的 Markdown export。

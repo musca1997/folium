@@ -133,7 +133,8 @@ export default function AboutPage() {
             <h2 className="text-xl font-normal tracking-tight">After deployment: let your agent use Folium</h2>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted">
               The Folium CLI is not required to deploy Folium. It is a remote control for an existing Folium instance. Generate an Agent API
-              token from Settings, then configure the CLI locally.
+              token from Settings, then configure the CLI locally. For login-gated or verification-gated pages, use the browser extension to clip
+              content from your own browser.
             </p>
             <pre className="mt-5 overflow-x-auto border border-line bg-soft p-4 text-xs leading-relaxed text-ink"><code>{`folium config set-url https://your-folium.example.com
 folium config set-token folium_xxx
@@ -147,6 +148,7 @@ folium extract https://example.com --json`}</code></pre>
             <div className="mt-5 flex flex-wrap gap-2 text-sm">
               <Link href="https://github.com/musca1997/folium" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">GitHub</Link>
               <Link href="https://github.com/musca1997/folium/blob/master/docs/cli.md" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">CLI docs</Link>
+              <Link href="https://github.com/musca1997/folium/blob/master/docs/extension.md" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">Extension docs</Link>
               <Link href="https://github.com/musca1997/folium/blob/master/skills/folium/SKILL.md" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">Agent skill</Link>
             </div>
           </section>

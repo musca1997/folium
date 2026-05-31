@@ -13,6 +13,7 @@
     "worker:once": "tsx -r tsconfig-paths/register scripts/worker.ts --once",
     "cli": "tsx packages/cli/src/index.ts",
     "cli:build": "tsc -p packages/cli/tsconfig.json",
+    "extension:build": "tsc -p packages/extension/tsconfig.json && cp packages/extension/manifest.json packages/extension/popup.html packages/extension/dist/",
     "dev:all": "bash scripts/dev-all.sh",
     "start:all": "bash scripts/start-all.sh"
   },

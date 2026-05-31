@@ -82,7 +82,7 @@ Demo site: https://folium.fyi/
 - Some websites block extraction or screenshots despite browser fallback.
 - The taxonomy management UI exists experimentally but is not exposed in the main navigation yet.
 - Public/private filtering is implemented, but deployments exposed to the public internet should still be treated cautiously.
-- Browser extension, bulk imports, export flows, and richer document extraction are not implemented yet.
+- Bulk imports, export flows, and richer document extraction are not implemented yet.
 
 ## Local development
 
@@ -99,8 +99,7 @@ Useful pages:
 
 - `/` — visual library
 - `/add` — save a URL
-- `/search` — keyword search
-- `/nodes` — generated wiki nodes
+- `/nodes` — search and generated wiki nodes
 - `/graph` — block-node graph summary
 - `/processing` — queued/running/done/failed jobs
 
@@ -144,6 +143,7 @@ npm run dev:all
 npm run start:all
 npm run worker
 npm run worker:once
+npm run extension:build
 ```
 
 ## Environment
@@ -217,6 +217,7 @@ Data quality and curation:
 
 Agent API, CLI, and integrations:
 
+- [x] Add browser extension / web clipper for saving login-gated and verification-gated pages.
 - [ ] Add automated tests for API routes and CLI commands.
 - [ ] Package the Folium CLI for local install and npm publishing.
 - [ ] Add named API tokens with created-at, last-used-at, and revoke controls.
@@ -231,7 +232,6 @@ Browsing and library workflows:
 - [ ] Add a Library list view alongside the visual grid for denser browsing.
 - [ ] Add bulk actions for selected blocks: pin, unpin, public, private, delete, and reprocess.
 - [ ] Add browser bookmarklet for one-click saving.
-- [ ] Add a minimal browser extension after the API stabilizes.
 - [ ] Add import/export for Netscape bookmarks, JSON, Markdown, Linkding, Raindrop, and similar tools.
 - [ ] Add JSON export/import for full library migration.
 - [ ] Add Markdown export for selected blocks, topics, and nodes.

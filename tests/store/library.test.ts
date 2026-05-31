@@ -103,4 +103,27 @@ describe("library store", () => {
     expect(updated.status).toBe("thinking");
     expect(jobs.some((job) => job.blockId === block.id && job.type === "analyze_block" && job.status === "queued")).toBe(true);
   });
+
+  it("stores browser extension content with metadata and queues analysis", async () => {
+    const store = createLibraryStore({ dataDir: dir, enableNetwork: false });
+    const result = await store.addUrlBlock("https://linux.do/t/example");
+
+    const updated = await store.setProvidedContent(result.block.id, {
+      title: "Linux forum thread",
+      description: "A clipped forum discussion.",
+      contentText: "Clipped browser text about Linux, forums, and self-hosting.".repeat(8),
+      contentHtml: "<article>Clipped browser text</article>",
+      canonicalUrl: "https://linux.do/t/example",
+      extractionMethod: "browser_extension",
+    });
+    const jobs = await store.listJobs();
+
+    expect(updated.title).toBe("Linux forum thread");
+    expect(updated.description).toBe("A clipped forum discussion.");
+    expect(updated.contentHtml).toContain("article");
+    expect(updated.metadata.canonicalUrl).toBe("https://linux.do/t/example");
+    expect(updated.metadata.extractionMethod).toBe("browser_extension");
+    expect(updated.status).toBe("thinking");
+    expect(jobs.some((job) => job.blockId === result.block.id && job.type === "analyze_block" && job.status === "queued")).toBe(true);
+  });
 });
