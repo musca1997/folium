@@ -2,6 +2,13 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import { PageIntro } from "@/components/PageIntro";
 
+const deployPrompt = `Please deploy Folium for me from https://github.com/musca1997/folium.
+
+Use Docker Compose if available. Otherwise use npm with separate web and worker processes.
+Deployment does not require a Folium API token.
+
+After deployment, verify the web UI, tell me the URL, and remind me to change the initial password before generating an Agent API token.`;
+
 export default function AboutPage() {
   return (
     <>
@@ -55,30 +62,65 @@ export default function AboutPage() {
             <div className="border border-line p-5">
               <p className="text-xs uppercase tracking-wide text-muted">Revisit</p>
               <p className="mt-3 text-sm leading-relaxed text-muted">
-                Browse your library through a visual grid, search, topics, nodes, and a graph without turning it into a raw bookmark dump.
+                Browse through a visual grid, search, topics, nodes, and a graph without turning links into a raw bookmark dump.
               </p>
             </div>
           </div>
         </section>
 
-        <section className="mt-8">
-          <div className="mb-4">
-            <p className="text-xs uppercase tracking-wide text-muted">For builders and agents</p>
-            <h2 className="mt-2 text-xl font-normal tracking-tight">Deploy it, inspect it, extend it</h2>
-          </div>
-          <div className="grid gap-6 md:grid-cols-2">
-            <Link href="/agents" className="border border-line p-5 hover:bg-soft">
-              <p className="text-xs uppercase tracking-wide text-muted">Agents</p>
-              <p className="mt-3 text-sm leading-relaxed text-muted">
-                Let coding agents deploy Folium for you, then use the CLI/API to save, search, extract, and curate your library.
+        <section id="agents" className="mt-8 border border-line p-6 scroll-mt-20">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-muted">Agent-ready</p>
+              <h2 className="mt-2 text-xl font-normal tracking-tight">Deploy it, then let agents use it</h2>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
+                There are two separate agent workflows. Deployment does not need a Folium API token. Library operations do: after Folium is
+                running, generate an Agent API token in Settings and give the agent only the Folium URL and token.
               </p>
-            </Link>
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                <div className="border border-line p-4">
+                  <p className="text-xs uppercase tracking-wide text-muted">Deploy</p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">
+                    Clone, configure, start web and worker services, verify the URL. No Folium API token needed.
+                  </p>
+                </div>
+                <div className="border border-line p-4">
+                  <p className="text-xs uppercase tracking-wide text-muted">Use</p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">
+                    Save, search, extract, pin, and curate links through the CLI/API with an Agent API token.
+                  </p>
+                </div>
+              </div>
+            </div>
             <Link href="https://github.com/musca1997/folium" className="border border-line p-5 hover:bg-soft">
               <p className="text-xs uppercase tracking-wide text-muted">GitHub</p>
               <p className="mt-3 text-sm leading-relaxed text-muted">
                 Read the source, deployment notes, roadmap, CLI docs, and self-hosting guidance for the public preview.
               </p>
             </Link>
+          </div>
+
+          <div className="mt-6 grid gap-6 lg:grid-cols-2">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-muted">Copyable deploy prompt</p>
+              <pre className="mt-3 overflow-x-auto border border-line bg-soft p-4 text-xs leading-relaxed text-ink"><code>{deployPrompt}</code></pre>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-muted">CLI after deployment</p>
+              <pre className="mt-3 overflow-x-auto border border-line bg-soft p-4 text-xs leading-relaxed text-ink"><code>{`folium config set-url https://your-folium.example.com
+folium config set-token folium_xxx
+folium status --json
+folium add https://example.com --private --wait --json
+folium search "local-first knowledge tools" --json`}</code></pre>
+            </div>
+          </div>
+
+          <div className="mt-6 border-t border-line pt-5">
+            <p className="text-xs uppercase tracking-wide text-muted">Safety notes</p>
+            <p className="mt-3 text-sm leading-relaxed text-muted">
+              Change default credentials before remote access. Keep secrets out of chat logs and git. Save privately unless you explicitly want a
+              block public. Use HTTPS or private network access for remote deployments. Back up local data before upgrades or agent maintenance.
+            </p>
           </div>
         </section>
       </main>
