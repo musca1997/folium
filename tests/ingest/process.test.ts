@@ -64,6 +64,35 @@ describe("ensureDomainTopicCoverage", () => {
     expect(result.topics[0]?.name).toBe("Philosophy");
   });
 
+  it("does not promote music for AI papers that mention scores", () => {
+    const result = ensureDomainTopicCoverage("https://www.anthropic.com/research/natural-language-autoencoders", {
+      title: "Natural Language Autoencoders",
+      description: "Turning Claude's thoughts into text",
+      textContent: "AI model Claude activations language models interpretability. We score the NLA on how similar the reconstructed activation is to the original.",
+    }, {
+      summary: "An AI interpretability paper.",
+      topics: [{ name: "AI and Machine Learning", description: "AI research.", confidence: 0.98, claims: [], evidence: [] }],
+      nodes: [{ type: "Technology", name: "Claude", description: "Language model.", relevance: 0.9, claims: [], evidence: [] }],
+    });
+
+    expect(result.topics.map((topic) => topic.name)).not.toContain("Music and Musicology");
+    expect(result.topics[0]?.name).toBe("AI and Machine Learning");
+  });
+
+  it("promotes AI and machine learning for language model courses", () => {
+    const result = ensureDomainTopicCoverage("https://www.youtube.com/playlist", {
+      title: "Stanford CS336: Language Modeling from Scratch | Spring 2026",
+      description: "A course about language models.",
+      textContent: "language models transformer pretraining inference neural networks datasets tokenization",
+    }, {
+      summary: "A course playlist.",
+      topics: [{ name: "Web Curation", description: "Saved web references.", confidence: 0.7, claims: [], evidence: [] }],
+      nodes: [{ type: "Source", name: "YouTube", description: "Video platform.", relevance: 0.7, claims: [], evidence: [] }],
+    });
+
+    expect(result.topics[0]?.name).toBe("AI and Machine Learning");
+  });
+
   it("promotes wireless communication for LoRa mesh communities", () => {
     const result = ensureDomainTopicCoverage("https://meshcn.net", {
       title: "MeshCN - Meshtastic 中国社区",
