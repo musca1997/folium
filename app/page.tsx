@@ -27,8 +27,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const visibleBlocks = blocks;
   const activeVisibility = visibility === "public" || visibility === "private" ? visibility : "all";
   const filteredBlocks = activeVisibility === "all" ? visibleBlocks : visibleBlocks.filter((block) => block.visibility === activeVisibility);
-  const pinnedBlocks = filteredBlocks.filter((block) => block.curation?.favorite);
-  const libraryBlocks = filteredBlocks.filter((block) => !block.curation?.favorite);
+  const libraryBlocks = [...filteredBlocks].sort((a, b) => Number(Boolean(b.curation?.favorite)) - Number(Boolean(a.curation?.favorite)));
   const publicCount = visibleBlocks.filter((block) => block.visibility === "public").length;
   const privateCount = authed ? blocks.filter((block) => block.visibility !== "public").length : 0;
   const processingCount = jobs.filter((job) => job.status === "queued" || job.status === "running").length;
@@ -89,19 +88,6 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             ) : null}
           </div>
         </section>
-
-        {pinnedBlocks.length > 0 ? (
-          <section className="mb-10">
-            <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-normal tracking-tight">Pinned</h2>
-                <p className="mt-1 text-sm text-muted">Selected references kept at the top of the library.</p>
-              </div>
-              <p className="text-sm text-muted">{pinnedBlocks.length} pinned</p>
-            </div>
-            <BlockGrid blocks={pinnedBlocks} nodes={nodes} csrf={csrf} authed={authed} />
-          </section>
-        ) : null}
 
         <section>
           <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
