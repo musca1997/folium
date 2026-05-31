@@ -1,5 +1,6 @@
 import { setTimeout as sleep } from "node:timers/promises";
 import { libraryStore } from "@/lib/store/library";
+import { writeWorkerHeartbeat } from "@/lib/workerHeartbeat";
 
 const once = process.argv.includes("--once");
 const intervalMs = Number(process.env.FOLIUM_WORKER_INTERVAL_MS ?? 2000);
@@ -8,6 +9,7 @@ async function main() {
   console.log(`Folium worker started${once ? " in --once mode" : ""}.`);
 
   do {
+    await writeWorkerHeartbeat(intervalMs);
     const didWork = await libraryStore.runNextJob();
     if (didWork) {
       console.log("Processed one queued job.");

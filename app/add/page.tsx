@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { PageIntro } from "@/components/PageIntro";
-import { isAuthenticated } from "@/lib/auth";
+import { getCsrfToken, isAuthenticated } from "@/lib/auth";
 import { addUrlAction } from "../actions";
 
-export default async function AddPage() {
+export default async function AddPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   if (!(await isAuthenticated())) redirect("/login?next=/add");
+  const [{ error }, csrf] = await Promise.all([searchParams, getCsrfToken()]);
 
   return (
     <>
@@ -17,6 +18,7 @@ export default async function AddPage() {
           description="Paste a URL and Folium will extract metadata, capture a preview, and connect it to wiki nodes."
         />
         <form action={addUrlAction} className="space-y-4">
+          <input type="hidden" name="csrf" value={csrf} />
           <div className="flex gap-2">
             <input
               name="url"
@@ -29,6 +31,8 @@ export default async function AddPage() {
               Add
             </button>
           </div>
+          {error === "unsafe-url" ? <p className="text-xs text-muted">That URL is not allowed. Use a public http or https URL.</p> : null}
+          {error === "missing-url" ? <p className="text-xs text-muted">Paste a URL first.</p> : null}
           <fieldset className="border border-line p-4">
             <legend className="px-1 text-xs uppercase tracking-wide text-muted">Visibility</legend>
             <div className="flex flex-wrap gap-4 text-sm">

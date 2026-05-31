@@ -164,8 +164,13 @@ npx playwright install chromium
 - Do not commit `.env.local` or `data/`.
 - New links are private by default; guests can only browse public content.
 - The current auth model is single-user and intended for self-hosted deployments.
+- Passwords are stored with Node `scrypt`; legacy SHA-256 hashes are upgraded after a successful login.
+- Login attempts are rate-limited locally under `data/login-rate-limit.json`.
+- Form mutations use CSRF tokens, and destructive actions require explicit confirmation.
+- URL ingestion blocks localhost, private, link-local, and reserved IP ranges to reduce SSRF risk.
 - Change the default username/password and set a strong `FOLIUM_SESSION_SECRET` before remote deployment.
 - Run behind HTTPS if exposed outside your machine.
+- Use Settings → Backup / restore or copy `data/` regularly before upgrades.
 
 ## License
 
@@ -175,7 +180,7 @@ Folium is licensed under the Apache License, Version 2.0. See [LICENSE](./LICENS
 
 Near-term:
 
-- Worker heartbeat and clearer online/offline status in the UI.
+- More detailed worker health checks and stuck-job recovery.
 - More transparent extraction logs and retry diagnostics per block.
 - Finish taxonomy management UI for rename, aliases, merge, delete, and canonical review flows.
 - Browser bookmarklet / extension for one-click saving.

@@ -10,6 +10,8 @@ tsconfig.tsbuildinfo
 # Local Folium state and secrets
 data/*.json
 data/screenshots/
+data/backups/
+data/login-rate-limit.json
 public/screenshots/
 
 # Keep placeholder files if added later

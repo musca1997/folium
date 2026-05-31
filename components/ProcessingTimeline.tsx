@@ -1,4 +1,5 @@
 import type { Block, Job } from "@/lib/store/types";
+import type { WorkerHeartbeat } from "@/lib/workerHeartbeat";
 
 const steps = [
   { key: "queued", label: "Queued", description: "Waiting for the background worker." },
@@ -27,7 +28,7 @@ function isDone(step: StepKey, current: StepKey, block: Block): boolean {
   return order < currentOrder;
 }
 
-export function ProcessingTimeline({ block, job }: { block: Block; job: Job | null }) {
+export function ProcessingTimeline({ block, job, heartbeat }: { block: Block; job: Job | null; heartbeat?: (WorkerHeartbeat & { online: boolean; ageMs: number }) | null }) {
   const current = currentStep(block, job);
   const active = block.status !== "indexed" && block.status !== "failed";
   const error = job?.error || (typeof block.metadata.extractionError === "string" ? block.metadata.extractionError : null);
@@ -62,6 +63,7 @@ export function ProcessingTimeline({ block, job }: { block: Block; job: Job | nu
         })}
       </div>
       {block.metadata.extractionMethod ? <p className="mt-4 text-xs text-muted">Extraction method: {String(block.metadata.extractionMethod)}</p> : null}
+      <p className="mt-4 text-xs text-muted">Worker: {heartbeat?.online ? "online" : "offline"}{heartbeat ? ` · last seen ${Math.round(heartbeat.ageMs / 1000)}s ago` : ""}</p>
       {job ? <p className="mt-1 text-xs text-muted">Job: {job.type} · {job.status}</p> : null}
       {error ? <p className="mt-3 border-t border-line pt-3 text-xs leading-relaxed text-muted">{error}</p> : null}
     </div>

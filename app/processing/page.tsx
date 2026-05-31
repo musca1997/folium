@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { PageIntro } from "@/components/PageIntro";
 import { isAuthenticated } from "@/lib/auth";
 import { libraryStore } from "@/lib/store/library";
+import { getWorkerHeartbeat } from "@/lib/workerHeartbeat";
 import type { JobStatus } from "@/lib/store/types";
 
 export const revalidate = 2;
@@ -17,7 +18,7 @@ const statusLabels: Record<JobStatus, string> = {
 
 export default async function ProcessingPage() {
   if (!(await isAuthenticated())) redirect("/login?next=/processing");
-  const [jobs, summary] = await Promise.all([libraryStore.listJobsWithBlocks(), libraryStore.getJobSummary()]);
+  const [jobs, summary, heartbeat] = await Promise.all([libraryStore.listJobsWithBlocks(), libraryStore.getJobSummary(), getWorkerHeartbeat()]);
 
   return (
     <>
@@ -28,6 +29,12 @@ export default async function ProcessingPage() {
           title="Processing"
           description="Queued and recent jobs for metadata extraction, screenshots, and LLM wiki classification."
         />
+
+        <section className="mb-5 border border-line p-4 text-sm text-muted">
+          Worker: <span className="text-ink">{heartbeat?.online ? "online" : "offline"}</span>
+          {heartbeat ? <span> · pid {heartbeat.pid} · last seen {Math.round(heartbeat.ageMs / 1000)}s ago</span> : null}
+          {!heartbeat?.online ? <p className="mt-2">Queued jobs will not run until you start <code>npm run worker</code> or <code>npm run dev:all</code>.</p> : null}
+        </section>
 
         <section className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
           {(Object.keys(statusLabels) as JobStatus[]).map((status) => (

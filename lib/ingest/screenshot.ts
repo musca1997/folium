@@ -1,6 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { chromium } from "playwright";
+import { assertSafePublicUrl } from "@/lib/security/urlSafety";
 
 export type ScreenshotResult = {
   path: string | null;
@@ -12,6 +13,7 @@ export function screenshotPathForBlock(blockId: string): string {
 }
 
 export async function captureScreenshot(url: string, blockId: string): Promise<ScreenshotResult> {
+  const safeUrl = await assertSafePublicUrl(url);
   const publicPath = screenshotPathForBlock(blockId);
   const outputDir = join(process.cwd(), "data", "screenshots");
   const outputPath = join(outputDir, `${blockId}.png`);
@@ -21,7 +23,7 @@ export async function captureScreenshot(url: string, blockId: string): Promise<S
   try {
     browser = await chromium.launch({ headless: true });
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 1 });
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30_000 });
+    await page.goto(safeUrl, { waitUntil: "domcontentloaded", timeout: 30_000 });
     await page.waitForTimeout(1200);
     await page.screenshot({ path: outputPath, fullPage: false });
     return { path: publicPath, error: null };

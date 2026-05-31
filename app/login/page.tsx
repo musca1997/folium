@@ -26,6 +26,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
               <input type="password" name="password" autoComplete="current-password" required className="mt-2 w-full border border-line px-3 py-2 text-sm outline-none focus:border-ink" />
             </label>
             {error === "invalid" ? <p className="text-xs text-muted">Invalid username or password.</p> : null}
+            {error === "limited" ? <p className="text-xs text-muted">Too many failed attempts. Try again later.</p> : null}
             <button className="border border-ink px-4 py-2 text-sm hover:bg-ink hover:text-white" type="submit">
               Log in
             </button>

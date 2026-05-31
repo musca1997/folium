@@ -1,5 +1,6 @@
 import { Readability } from "@mozilla/readability";
 import { JSDOM } from "jsdom";
+import { assertSafePublicUrl } from "@/lib/security/urlSafety";
 
 export type ExtractedPageData = {
   title: string;
@@ -57,14 +58,15 @@ export function extractPageDataFromHtml(html: string, sourceUrl: string): Extrac
 }
 
 export async function fetchAndExtractPage(url: string): Promise<ExtractedPageData> {
-  const response = await fetch(url, {
+  const safeUrl = await assertSafePublicUrl(url);
+  const response = await fetch(safeUrl, {
     signal: AbortSignal.timeout(20_000),
     headers: {
       "user-agent": "Folium/0.1 (+self-hosted visual library)",
       accept: "text/html,application/xhtml+xml",
     },
   });
-  if (!response.ok) throw new Error(`Failed to fetch ${url}: ${response.status}`);
+  if (!response.ok) throw new Error(`Failed to fetch ${safeUrl}: ${response.status}`);
   const html = await response.text();
-  return extractPageDataFromHtml(html, response.url || url);
+  return extractPageDataFromHtml(html, response.url || safeUrl);
 }

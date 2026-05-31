@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { PageIntro } from "@/components/PageIntro";
 import { deleteNodeAction, deleteTopicAction, mergeNodeAction, mergeTopicAction, updateNodeAction, updateTopicAction } from "@/app/actions";
-import { isAuthenticated } from "@/lib/auth";
+import { getCsrfToken, isAuthenticated } from "@/lib/auth";
 import { libraryStore } from "@/lib/store/library";
 import type { NodeType } from "@/lib/store/types";
 
@@ -10,7 +10,7 @@ const nodeTypes: NodeType[] = ["Concept", "Project", "Source", "Technology", "Pe
 
 export default async function TaxonomyPage() {
   if (!(await isAuthenticated())) redirect("/login?next=/taxonomy");
-  const [topics, nodes] = await Promise.all([libraryStore.listTopics(), libraryStore.listNodes()]);
+  const [topics, nodes, csrf] = await Promise.all([libraryStore.listTopics(), libraryStore.listNodes(), getCsrfToken()]);
 
   return (
     <>
@@ -24,6 +24,7 @@ export default async function TaxonomyPage() {
             {topics.map((topic) => (
               <div key={topic.id} className="border border-line p-4">
                 <form action={updateTopicAction} className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)_220px_auto]">
+                  <input type="hidden" name="csrf" value={csrf} />
                   <input type="hidden" name="id" value={topic.id} />
                   <label className="text-xs text-muted">Name<input name="name" defaultValue={topic.name} className="mt-1 w-full border border-line px-2 py-1.5 text-sm text-ink" /></label>
                   <label className="text-xs text-muted">Description<input name="description" defaultValue={topic.description} className="mt-1 w-full border border-line px-2 py-1.5 text-sm text-ink" /></label>
@@ -32,6 +33,7 @@ export default async function TaxonomyPage() {
                 </form>
                 <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3">
                   <form action={mergeTopicAction} className="flex gap-2 text-sm">
+                    <input type="hidden" name="csrf" value={csrf} />
                     <input type="hidden" name="sourceId" value={topic.id} />
                     <select name="targetId" className="border border-line px-2 py-1.5">
                       {topics.filter((item) => item.id !== topic.id).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -39,7 +41,10 @@ export default async function TaxonomyPage() {
                     <button className="border border-line px-3 py-1.5 text-muted hover:border-ink hover:text-ink">Merge into</button>
                   </form>
                   <form action={deleteTopicAction}>
+                    <input type="hidden" name="csrf" value={csrf} />
+                  <input type="hidden" name="csrf" value={csrf} />
                     <input type="hidden" name="id" value={topic.id} />
+                    <input type="hidden" name="confirm" value="delete" />
                     <button className="px-3 py-1.5 text-sm text-muted underline hover:text-ink">Delete</button>
                   </form>
                 </div>
@@ -54,6 +59,7 @@ export default async function TaxonomyPage() {
             {nodes.map((node) => (
               <div key={node.id} className="border border-line p-4">
                 <form action={updateNodeAction} className="grid gap-3 lg:grid-cols-[180px_140px_minmax(0,1fr)_220px_auto]">
+                  <input type="hidden" name="csrf" value={csrf} />
                   <input type="hidden" name="id" value={node.id} />
                   <label className="text-xs text-muted">Name<input name="name" defaultValue={node.name} className="mt-1 w-full border border-line px-2 py-1.5 text-sm text-ink" /></label>
                   <label className="text-xs text-muted">Type<select name="type" defaultValue={node.type} className="mt-1 w-full border border-line px-2 py-1.5 text-sm text-ink">{nodeTypes.map((type) => <option key={type} value={type}>{type}</option>)}</select></label>
@@ -63,6 +69,7 @@ export default async function TaxonomyPage() {
                 </form>
                 <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3">
                   <form action={mergeNodeAction} className="flex gap-2 text-sm">
+                    <input type="hidden" name="csrf" value={csrf} />
                     <input type="hidden" name="sourceId" value={node.id} />
                     <select name="targetId" className="border border-line px-2 py-1.5">
                       {nodes.filter((item) => item.id !== node.id).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -70,7 +77,10 @@ export default async function TaxonomyPage() {
                     <button className="border border-line px-3 py-1.5 text-muted hover:border-ink hover:text-ink">Merge into</button>
                   </form>
                   <form action={deleteNodeAction}>
+                    <input type="hidden" name="csrf" value={csrf} />
+                  <input type="hidden" name="csrf" value={csrf} />
                     <input type="hidden" name="id" value={node.id} />
+                    <input type="hidden" name="confirm" value="delete" />
                     <button className="px-3 py-1.5 text-sm text-muted underline hover:text-ink">Delete</button>
                   </form>
                 </div>
