@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
-export function NodeSearchForm({ initialQuery }: { initialQuery: string }) {
+export function NodeSearchForm({ initialQuery, action = "/nodes", clearHref = "/nodes" }: { initialQuery: string; action?: string; clearHref?: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const [query, setQuery] = useState(initialQuery);
@@ -22,7 +22,7 @@ export function NodeSearchForm({ initialQuery }: { initialQuery: string }) {
   }, [pathname, query, router]);
 
   return (
-    <form className="flex gap-2" action="/nodes">
+    <form className="flex gap-2" action={action}>
       <input
         name="q"
         value={query}
@@ -31,7 +31,7 @@ export function NodeSearchForm({ initialQuery }: { initialQuery: string }) {
         className="min-w-0 flex-1 border border-line px-3 py-2 text-sm outline-none focus:border-ink"
       />
       <button className="border border-ink px-4 py-2 text-sm hover:bg-ink hover:text-white">Search</button>
-      {initialQuery ? <Link href="/nodes" className="border border-line px-4 py-2 text-sm text-muted hover:border-ink hover:text-ink">Clear</Link> : null}
+      {initialQuery ? <Link href={clearHref} className="border border-line px-4 py-2 text-sm text-muted hover:border-ink hover:text-ink">Clear</Link> : null}
     </form>
   );
 }

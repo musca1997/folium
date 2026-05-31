@@ -99,7 +99,8 @@ npm run dev:all
 
 - `/` — 视觉链接库
 - `/add` — 保存 URL
-- `/nodes` — 搜索和生成的 Wiki 节点
+- `/topics` — 生成的主题和 Wiki 节点
+- `/search` — 关键词搜索
 - `/graph` — block-node 图谱摘要
 - `/processing` — 排队/运行中/完成/失败的任务
 

@@ -10,7 +10,7 @@ export async function Header() {
         <div className="flex items-center gap-5 text-muted">
           <Link href="/" className="font-semibold text-ink">Library</Link>
           <Link href="/topics">Topics</Link>
-          <Link href="/nodes">Search</Link>
+          <Link href="/search">Search</Link>
           <Link href="/graph">Graph</Link>
           {authed ? <Link href="/processing">Processing</Link> : null}
           <Link href="/about">About</Link>

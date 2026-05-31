@@ -99,7 +99,8 @@ Useful pages:
 
 - `/` — visual library
 - `/add` — save a URL
-- `/nodes` — search and generated wiki nodes
+- `/topics` — generated topics and wiki nodes
+- `/search` — keyword search
 - `/graph` — block-node graph summary
 - `/processing` — queued/running/done/failed jobs
 
