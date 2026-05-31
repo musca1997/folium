@@ -155,8 +155,16 @@ npx playwright install chromium
 - [ ] 打包 CLI，方便本地/全局安装。
 - [ ] 添加生产 Docker health checks 和 systemd/Caddy/nginx 示例。
 - [ ] 添加 Library list view、密度控制和批量操作。
-- [ ] 完成 taxonomy rename/alias/merge/delete review flows。
 - [ ] 添加 bookmarks、JSON、Markdown、Linkding、Raindrop 导入/导出。
+
+Taxonomy 与策展质量：
+
+- [ ] 将 domain topic rules 移到独立 taxonomy module。
+- [ ] 记录 deterministic topics 被添加的原因，包括命中的规则、关键词和证据来源。
+- [ ] 添加 negative/context rules，减少 music、security、design 等误分类。
+- [ ] 完成 taxonomy rename、alias、merge、delete 和 canonical review flows。
+- [ ] 添加 block-level 手动 topic/node 编辑和 override controls。
+- [ ] 添加 taxonomy suggestions review queue，审核后再影响全局图谱。
 
 搜索与存储：
 

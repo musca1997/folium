@@ -155,8 +155,16 @@ Near term:
 - [ ] Package the CLI for easier local/global install.
 - [ ] Add production Docker health checks and systemd/Caddy/nginx examples.
 - [ ] Add Library list view, density controls, and bulk actions.
-- [ ] Finish taxonomy rename/alias/merge/delete review flows.
 - [ ] Add import/export for bookmarks, JSON, Markdown, Linkding, and Raindrop.
+
+Taxonomy and curation quality:
+
+- [ ] Move domain topic rules into a dedicated taxonomy module.
+- [ ] Record why deterministic topics were added, including matched rules, terms, and evidence source.
+- [ ] Add negative/context rules to reduce false-positive topics such as music, security, and design.
+- [ ] Finish taxonomy rename, alias, merge, delete, and canonical review flows.
+- [ ] Add block-level manual topic/node editing and override controls.
+- [ ] Add a review queue for taxonomy suggestions before they affect the global graph.
 
 Search and storage:
 
