@@ -6,8 +6,18 @@ import { libraryStore } from "@/lib/store/library";
 
 export const revalidate = 2;
 
-export default async function HomePage({ searchParams }: { searchParams: Promise<{ visibility?: string }> }) {
-  const [{ visibility }, authed] = await Promise.all([searchParams, isAuthenticated()]);
+const PAGE_SIZE = 50;
+
+function pageHref(page: number, visibility: string) {
+  const params = new URLSearchParams();
+  if (visibility !== "all") params.set("visibility", visibility);
+  if (page > 1) params.set("page", String(page));
+  const query = params.toString();
+  return query ? `/?${query}` : "/";
+}
+
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ visibility?: string; page?: string }> }) {
+  const [{ visibility, page }, authed] = await Promise.all([searchParams, isAuthenticated()]);
   const [blocks, nodes, jobs] = await Promise.all([
     authed ? libraryStore.listBlocks() : libraryStore.listPublicBlocks(),
     authed ? libraryStore.listNodes() : libraryStore.listPublicNodes(),
@@ -20,6 +30,11 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const privateCount = authed ? blocks.filter((block) => block.visibility !== "public").length : 0;
   const processingCount = jobs.filter((job) => job.status === "queued" || job.status === "running").length;
   const indexedCount = filteredBlocks.filter((block) => block.status === "indexed").length;
+  const totalPages = Math.max(1, Math.ceil(filteredBlocks.length / PAGE_SIZE));
+  const requestedPage = Number.parseInt(page ?? "1", 10);
+  const currentPage = Number.isFinite(requestedPage) ? Math.min(Math.max(requestedPage, 1), totalPages) : 1;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const paginatedBlocks = filteredBlocks.slice(start, start + PAGE_SIZE);
 
   return (
     <>
@@ -86,7 +101,31 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               {authed ? <Link href="/?visibility=private" className={`border px-3 py-1.5 ${activeVisibility === "private" ? "border-ink text-ink" : "border-line text-muted hover:border-ink hover:text-ink"}`}>Private {privateCount}</Link> : null}
             </div>
           </div>
-          <BlockGrid blocks={filteredBlocks} nodes={nodes} />
+          <BlockGrid blocks={paginatedBlocks} nodes={nodes} />
+          {totalPages > 1 ? (
+            <nav className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 text-sm" aria-label="Library pagination">
+              <p className="text-muted">
+                Showing {start + 1}–{Math.min(start + PAGE_SIZE, filteredBlocks.length)} of {filteredBlocks.length} references
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={pageHref(currentPage - 1, activeVisibility)}
+                  aria-disabled={currentPage === 1}
+                  className={`border px-3 py-1.5 ${currentPage === 1 ? "pointer-events-none border-line text-muted opacity-40" : "border-line text-muted hover:border-ink hover:text-ink"}`}
+                >
+                  Previous
+                </Link>
+                <span className="px-2 text-muted">Page {currentPage} / {totalPages}</span>
+                <Link
+                  href={pageHref(currentPage + 1, activeVisibility)}
+                  aria-disabled={currentPage === totalPages}
+                  className={`border px-3 py-1.5 ${currentPage === totalPages ? "pointer-events-none border-line text-muted opacity-40" : "border-line text-muted hover:border-ink hover:text-ink"}`}
+                >
+                  Next
+                </Link>
+              </div>
+            </nav>
+          ) : null}
         </section>
       </main>
     </>
