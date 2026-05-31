@@ -29,7 +29,7 @@ function asNullableString(value: unknown): string | null | undefined {
 
 export async function POST(request: Request) {
   const unauthorized = await requireApiAuth(request);
-  if (unauthorized) return unauthorized;
+  if (unauthorized) return json({ error: "unauthorized" }, { status: 401 });
 
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const inputUrl = asString(body?.url).trim();
