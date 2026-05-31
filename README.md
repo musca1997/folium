@@ -1,5 +1,7 @@
 # Folium
 
+[简体中文](./README.zh-CN.md)
+
 A self-hosted LLM Wiki and curated link library for the web you keep.
 
 Folium turns saved links into structured references: it extracts readable text, captures visual previews, summarizes pages, creates broad topics and reusable wiki nodes, and lets you browse the result as a visual library, search index, topic map, and graph.
