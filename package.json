@@ -11,6 +11,8 @@
     "lint": "next lint",
     "worker": "tsx -r tsconfig-paths/register scripts/worker.ts",
     "worker:once": "tsx -r tsconfig-paths/register scripts/worker.ts --once",
+    "cli": "tsx packages/cli/src/index.ts",
+    "cli:build": "tsc -p packages/cli/tsconfig.json",
     "dev:all": "bash scripts/dev-all.sh",
     "start:all": "bash scripts/start-all.sh"
   },

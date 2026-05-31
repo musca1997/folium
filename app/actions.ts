@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { generateApiToken, revokeApiToken } from "@/lib/apiAuth";
 import { createLibraryBackup, restoreLibraryBackup } from "@/lib/backup";
 import { isAuthenticated, login, logout, updateCredentials, verifyCsrfToken } from "@/lib/auth";
 import { updateAiSettings } from "@/lib/settings";
@@ -109,6 +110,18 @@ export async function updateAiSettingsAction(formData: FormData) {
     clearApiKey: formData.get("clearApiKey") === "on",
   });
   redirect("/settings?ai=updated");
+}
+
+export async function generateApiTokenAction(formData: FormData) {
+  await requireAuthAndCsrf(formData, "/login?next=/settings");
+  const token = await generateApiToken();
+  redirect(`/settings?apiToken=${encodeURIComponent(token)}`);
+}
+
+export async function revokeApiTokenAction(formData: FormData) {
+  await requireAuthAndCsrf(formData, "/login?next=/settings");
+  await revokeApiToken();
+  redirect("/settings?api=revoked");
 }
 
 export async function createBackupAction(formData: FormData) {

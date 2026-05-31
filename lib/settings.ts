@@ -10,17 +10,23 @@ export type AiSettings = {
   updatedAt?: string;
 };
 
-export type AppSettings = {
-  ai: AiSettings;
+export type ApiSettings = {
+  tokenHash?: string;
+  updatedAt?: string;
 };
 
-const defaultSettings: AppSettings = { ai: {} };
+export type AppSettings = {
+  ai: AiSettings;
+  api: ApiSettings;
+};
+
+const defaultSettings: AppSettings = { ai: {}, api: {} };
 
 export async function getSettings(): Promise<AppSettings> {
   if (process.env.VITEST) return defaultSettings;
   try {
     const parsed = JSON.parse(await readFile(settingsPath, "utf8")) as Partial<AppSettings>;
-    return { ai: { ...(parsed.ai ?? {}) } };
+    return { ai: { ...(parsed.ai ?? {}) }, api: { ...(parsed.api ?? {}) } };
   } catch {
     return defaultSettings;
   }
@@ -28,6 +34,11 @@ export async function getSettings(): Promise<AppSettings> {
 
 export async function getAiSettings(): Promise<AiSettings> {
   return (await getSettings()).ai;
+}
+
+async function writeSettings(settings: AppSettings): Promise<void> {
+  await mkdir(join(process.cwd(), "data"), { recursive: true });
+  await writeFile(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
 }
 
 export async function updateAiSettings(input: { apiKey?: string; baseUrl?: string; model?: string; clearApiKey?: boolean }): Promise<AppSettings> {
@@ -44,7 +55,15 @@ export async function updateAiSettings(input: { apiKey?: string; baseUrl?: strin
   };
   if (input.clearApiKey) delete next.ai.apiKey;
   if (apiKeyInput) next.ai.apiKey = apiKeyInput;
-  await mkdir(join(process.cwd(), "data"), { recursive: true });
-  await writeFile(settingsPath, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+  await writeSettings(next);
+  return next;
+}
+
+export async function updateApiSettings(input: { tokenHash?: string | null; updatedAt?: string }): Promise<AppSettings> {
+  const current = await getSettings();
+  const next: AppSettings = { ...current, api: { ...current.api, updatedAt: input.updatedAt ?? new Date().toISOString() } };
+  if (input.tokenHash === null) delete next.api.tokenHash;
+  else if (input.tokenHash) next.api.tokenHash = input.tokenHash;
+  await writeSettings(next);
   return next;
 }

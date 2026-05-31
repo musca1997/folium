@@ -1,14 +1,14 @@
 import { redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { PageIntro } from "@/components/PageIntro";
-import { createBackupAction, logoutAction, restoreBackupAction, updateAiSettingsAction, updateCredentialsAction } from "@/app/actions";
+import { createBackupAction, generateApiTokenAction, logoutAction, restoreBackupAction, revokeApiTokenAction, updateAiSettingsAction, updateCredentialsAction } from "@/app/actions";
 import { getAuthUser, getCsrfToken, getSecurityStatus, isAuthenticated } from "@/lib/auth";
 import { listLibraryBackups } from "@/lib/backup";
 import { getAiSettings } from "@/lib/settings";
 
-export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ error?: string; ai?: string; backup?: string }> }) {
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ error?: string; ai?: string; backup?: string; api?: string; apiToken?: string }> }) {
   if (!(await isAuthenticated())) redirect("/login?next=/settings");
-  const [{ error, ai: aiStatus, backup: backupStatus }, user, ai, csrf, security, backups] = await Promise.all([searchParams, getAuthUser(), getAiSettings(), getCsrfToken(), getSecurityStatus(), listLibraryBackups()]);
+  const [{ error, ai: aiStatus, backup: backupStatus, api: apiStatus, apiToken }, user, ai, csrf, security, backups] = await Promise.all([searchParams, getAuthUser(), getAiSettings(), getCsrfToken(), getSecurityStatus(), listLibraryBackups()]);
 
   return (
     <>
@@ -81,6 +81,34 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               <p className="mt-3">The saved key is used for summaries, topics, wiki nodes, claims, and evidence extraction.</p>
               <p className="mt-4">Status: {ai.apiKey || process.env.OPENAI_API_KEY ? "API key configured" : "No API key configured"}.</p>
               <p className="mt-4">Saved keys are never displayed back in the interface.</p>
+            </aside>
+          </section>
+
+          <section className="grid gap-6 md:grid-cols-[minmax(0,1fr)_260px]">
+            <div className="space-y-4 border border-line p-5">
+              <p className="text-xs uppercase tracking-wide text-muted">Agent API</p>
+              <p className="text-sm leading-relaxed text-muted">Create an API token for the Folium CLI and agent workflows. The token is shown once.</p>
+              {apiToken ? (
+                <div className="border border-line bg-soft p-3">
+                  <p className="text-xs uppercase tracking-wide text-muted">New token</p>
+                  <code className="mt-2 block break-all text-sm text-ink">{apiToken}</code>
+                </div>
+              ) : null}
+              {apiStatus === "revoked" ? <p className="text-xs text-muted">API token revoked.</p> : null}
+              <div className="flex flex-wrap gap-2">
+                <form action={generateApiTokenAction}>
+                  <input type="hidden" name="csrf" value={csrf} />
+                  <button className="border border-ink px-4 py-2 text-sm hover:bg-ink hover:text-white" type="submit">Generate token</button>
+                </form>
+                <form action={revokeApiTokenAction}>
+                  <input type="hidden" name="csrf" value={csrf} />
+                  <button className="border border-line px-4 py-2 text-sm text-muted hover:border-ink hover:text-ink" type="submit">Revoke token</button>
+                </form>
+              </div>
+            </div>
+            <aside className="border border-line p-5 text-sm leading-relaxed text-muted">
+              <p className="text-xs uppercase tracking-wide">CLI access</p>
+              <p className="mt-3">Use API tokens for command-line and agent access. Keep tokens private and revoke them if exposed.</p>
             </aside>
           </section>
 
