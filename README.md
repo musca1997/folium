@@ -4,6 +4,8 @@ A self-hosted LLM Wiki and curated link library for the web you keep.
 
 Folium turns saved links into structured references: it extracts readable text, captures visual previews, summarizes pages, creates broad topics and reusable wiki nodes, and lets you browse the result as a visual library, search index, topic map, and graph.
 
+Demo site: https://folium.fyi/
+
 > Status: under active development. Folium is designed as a self-hosted single-user app and is not yet production-hardened for public multi-user deployments.
 
 ## Screenshots
