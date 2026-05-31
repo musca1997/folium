@@ -195,9 +195,9 @@ Folium 使用 Apache License, Version 2.0 授权。详情见 [LICENSE](./LICENSE
 
 可靠性与部署：
 
-- [ ] 为 library/job 存储添加 atomic JSON writes 和 file locking。
-- [ ] 在可配置超时后重置 stale running jobs。
-- [ ] 为 processing jobs 添加 retry policy、max attempts 和 last-error history。
+- [x] 为 library/job 存储添加 atomic JSON writes 和 file locking。
+- [x] 在可配置超时后重置 stale running jobs。
+- [x] 为 processing jobs 添加 retry policy、max attempts 和 last-error history。
 - [ ] 添加更丰富的 worker health checks 与 processing diagnostics。
 - [ ] 为 web 和 worker 添加更适合生产环境的 Docker health checks。
 - [ ] 添加 systemd units 示例。

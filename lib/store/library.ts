@@ -1,5 +1,6 @@
-import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
-import { join } from "node:path";
+import { constants } from "node:fs";
+import { mkdir, open, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { browserExtractPage } from "@/lib/ingest/browserExtract";
 import { fetchAndExtractPage } from "@/lib/ingest/extract";
 import { analyzeUrl, getAnalysisProviderName } from "@/lib/ingest/process";
@@ -8,9 +9,11 @@ import { getDomain, normalizeUrl, slugifyNodeName } from "@/lib/ingest/url";
 import { reconcileNodeName, reconcileTopicName } from "@/lib/taxonomy/reconcile";
 import type { Block, BlockNodeLink, BlockTopicLink, BlockVisibility, CurationState, Job, LibraryData, NodeType, Topic, WikiNode } from "./types";
 
-type StoreOptions = { dataDir?: string; enableNetwork?: boolean };
+type StoreOptions = { dataDir?: string; enableNetwork?: boolean; staleJobTimeoutMs?: number; maxJobAttempts?: number };
 
 const defaultData: LibraryData = { blocks: [], nodes: [], topics: [], jobs: [] };
+const DEFAULT_STALE_JOB_TIMEOUT_MS = 15 * 60_000;
+const DEFAULT_MAX_JOB_ATTEMPTS = 3;
 const nodeTypes: NodeType[] = ["Concept", "Project", "Source", "Technology", "Person", "Work", "Question", "Aesthetic"];
 
 function nowIso(): string { return new Date().toISOString(); }
@@ -31,6 +34,18 @@ function normalizeBlock(block: Block): Block {
 }
 function normalizeNode(node: WikiNode): WikiNode { return withCuration({ ...node, aliases: node.aliases ?? [] }); }
 function normalizeTopic(topic: Topic): Topic { return withCuration({ ...topic, aliases: topic.aliases ?? [] }); }
+function normalizeJob(job: Job, maxAttempts: number): Job {
+  return {
+    ...job,
+    error: job.error ?? null,
+    attempts: job.attempts ?? 0,
+    maxAttempts: job.maxAttempts ?? maxAttempts,
+    claimedAt: job.claimedAt ?? null,
+    lastError: job.lastError ?? job.error ?? null,
+    lastErrorAt: job.lastErrorAt ?? null,
+    errorHistory: job.errorHistory ?? [],
+  };
+}
 function visible<T extends { curation?: CurationState }>(items: T[]): T[] { return items.filter((item) => item.curation?.hidden !== true); }
 function publicBlocks(data: LibraryData): Block[] { return visible(data.blocks).filter((block) => block.visibility === "public"); }
 function linkedIds(blocks: Block[]) {
@@ -50,7 +65,38 @@ function mergeNodeLinks(existing: BlockNodeLink, incoming: BlockNodeLink): Block
 export function createLibraryStore(options: StoreOptions = {}) {
   const dataDir = options.dataDir ?? join(process.cwd(), "data");
   const enableNetwork = options.enableNetwork ?? true;
+  const staleJobTimeoutMs = options.staleJobTimeoutMs ?? DEFAULT_STALE_JOB_TIMEOUT_MS;
+  const maxJobAttempts = options.maxJobAttempts ?? DEFAULT_MAX_JOB_ATTEMPTS;
   const filePath = join(dataDir, "library.json");
+  const lockPath = `${filePath}.lock`;
+  let lockQueue = Promise.resolve();
+
+  async function withLock<T>(fn: () => Promise<T>): Promise<T> {
+    const previous = lockQueue;
+    let releaseInProcess!: () => void;
+    lockQueue = new Promise<void>((resolve) => { releaseInProcess = resolve; });
+    await previous;
+    let handle: Awaited<ReturnType<typeof open>> | null = null;
+    const started = Date.now();
+    while (!handle) {
+      try {
+        handle = await open(lockPath, constants.O_CREAT | constants.O_EXCL | constants.O_RDWR);
+        await handle.writeFile(`${process.pid} ${new Date().toISOString()}\n`, "utf8");
+      } catch (error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code !== "EEXIST") { releaseInProcess(); throw error; }
+        if (Date.now() - started > 30_000) { releaseInProcess(); throw new Error("Timed out waiting for library store lock"); }
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+    }
+    try {
+      return await fn();
+    } finally {
+      await handle.close().catch(() => undefined);
+      await rm(lockPath, { force: true }).catch(() => undefined);
+      releaseInProcess();
+    }
+  }
 
   async function readData(): Promise<LibraryData> {
     try {
@@ -60,10 +106,11 @@ export function createLibraryStore(options: StoreOptions = {}) {
         blocks: (parsed.blocks ?? []).map((block) => normalizeBlock(block as Block)),
         nodes: (parsed.nodes ?? []).map((node) => normalizeNode(node as WikiNode)),
         topics: (parsed.topics ?? []).map((topic) => normalizeTopic(topic as Topic)),
-        jobs: parsed.jobs ?? [],
+        jobs: (parsed.jobs ?? []).map((job) => normalizeJob(job as Job, maxJobAttempts)),
       };
-    } catch {
-      return structuredClone(defaultData);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return structuredClone(defaultData);
+      throw error;
     }
   }
 
@@ -77,12 +124,58 @@ export function createLibraryStore(options: StoreOptions = {}) {
 
   async function writeData(data: LibraryData): Promise<void> {
     await mkdir(dataDir, { recursive: true });
-    await writeFile(filePath, `${JSON.stringify({
+    const payload = `${JSON.stringify({
       ...data,
       blocks: data.blocks.map(omitImplicitCuration),
       nodes: data.nodes.map(omitImplicitCuration),
       topics: data.topics.map(omitImplicitCuration),
-    }, null, 2)}\n`, "utf8");
+    }, null, 2)}\n`;
+    const tmpPath = `${filePath}.tmp-${process.pid}-${crypto.randomUUID()}`;
+    const handle = await open(tmpPath, "w");
+    try {
+      await handle.writeFile(payload, "utf8");
+      await handle.sync();
+      await handle.close();
+      await rename(tmpPath, filePath);
+      const dirHandle = await open(dirname(filePath), "r").catch(() => null);
+      if (dirHandle) { await dirHandle.sync().catch(() => undefined); await dirHandle.close().catch(() => undefined); }
+    } catch (error) {
+      await handle.close().catch(() => undefined);
+      await rm(tmpPath, { force: true }).catch(() => undefined);
+      throw error;
+    }
+  }
+
+  async function updateData<T>(mutate: (data: LibraryData) => T | Promise<T>): Promise<T> {
+    return withLock(async () => {
+      const data = await readData();
+      const result = await mutate(data);
+      await writeData(data);
+      return result;
+    });
+  }
+
+  function recoverStaleRunningJobs(data: LibraryData, timestamp = nowIso()): void {
+    const cutoff = Date.now() - staleJobTimeoutMs;
+    for (const job of data.jobs) {
+      if (job.status !== "running") continue;
+      const basis = job.claimedAt ?? job.updatedAt;
+      if (new Date(basis).getTime() > cutoff) continue;
+      const attempt = job.attempts ?? 0;
+      const maxAttemptsForJob = job.maxAttempts ?? maxJobAttempts;
+      const message = "Recovered stale running job";
+      job.errorHistory = [...(job.errorHistory ?? []), { at: timestamp, message, attempt }];
+      job.lastError = message;
+      job.lastErrorAt = timestamp;
+      job.error = message;
+      job.claimedAt = null;
+      job.updatedAt = timestamp;
+      job.status = attempt < maxAttemptsForJob ? "queued" : "failed";
+      if (job.status === "failed") {
+        const block = data.blocks.find((item) => item.id === job.blockId);
+        if (block) { block.status = "failed"; block.updatedAt = timestamp; }
+      }
+    }
   }
 
   return {
@@ -94,7 +187,7 @@ export function createLibraryStore(options: StoreOptions = {}) {
         contentText: "", contentHtml: "", status: "pending", screenshotPath: null, previewImage: null, favicon: null,
         description: "", metadata: {}, visibility, nodeLinks: [], topicLinks: [], createdAt: timestamp, updatedAt: timestamp, curation: defaultCuration(),
       };
-      const data = await readData(); data.blocks.unshift(block); await writeData(data); return block;
+      await updateData((data) => { data.blocks.unshift(block); }); return block;
     },
 
     async listBlocks(): Promise<Block[]> { return visible((await readData()).blocks); },
@@ -189,43 +282,43 @@ export function createLibraryStore(options: StoreOptions = {}) {
     },
 
     async updateBlock(id: string, patch: Partial<Pick<Block, "title" | "summary" | "description" | "visibility">>): Promise<Block> {
-      const data = await readData();
-      const block = data.blocks.find((item) => item.id === id);
-      if (!block) throw new Error(`Block not found: ${id}`);
-      if (patch.title !== undefined) block.title = patch.title.trim() || block.domain;
-      if (patch.summary !== undefined) block.summary = patch.summary.trim();
-      if (patch.description !== undefined) block.description = patch.description.trim();
-      if (patch.visibility === "public" || patch.visibility === "private") block.visibility = patch.visibility;
-      block.updatedAt = nowIso();
-      await writeData(data);
-      return block;
+      return updateData((data) => {
+        const block = data.blocks.find((item) => item.id === id);
+        if (!block) throw new Error(`Block not found: ${id}`);
+        if (patch.title !== undefined) block.title = patch.title.trim() || block.domain;
+        if (patch.summary !== undefined) block.summary = patch.summary.trim();
+        if (patch.description !== undefined) block.description = patch.description.trim();
+        if (patch.visibility === "public" || patch.visibility === "private") block.visibility = patch.visibility;
+        block.updatedAt = nowIso();
+        return block;
+      });
     },
 
     async setBlockPinned(id: string, pinned: boolean): Promise<Block> {
-      const data = await readData();
-      const block = data.blocks.find((item) => item.id === id);
-      if (!block) throw new Error(`Block not found: ${id}`);
-      block.curation = { ...defaultCuration(), ...(block.curation ?? {}), favorite: pinned, updatedAt: nowIso() };
-      block.updatedAt = nowIso();
-      await writeData(data);
-      return block;
+      return updateData((data) => {
+        const block = data.blocks.find((item) => item.id === id);
+        if (!block) throw new Error(`Block not found: ${id}`);
+        block.curation = { ...defaultCuration(), ...(block.curation ?? {}), favorite: pinned, updatedAt: nowIso() };
+        block.updatedAt = nowIso();
+        return block;
+      });
     },
 
     async deleteBlock(id: string): Promise<void> {
-      const data = await readData();
-      const index = data.blocks.findIndex((item) => item.id === id);
-      if (index === -1) throw new Error(`Block not found: ${id}`);
-      data.blocks.splice(index, 1);
-      data.jobs = data.jobs.filter((job) => job.blockId !== id);
-      await writeData(data);
+      await updateData((data) => {
+        const index = data.blocks.findIndex((item) => item.id === id);
+        if (index === -1) throw new Error(`Block not found: ${id}`);
+        data.blocks.splice(index, 1);
+        data.jobs = data.jobs.filter((job) => job.blockId !== id);
+      });
     },
 
     async updateTopic(id: string, patch: { name?: string; description?: string; aliases?: string[] | string }): Promise<Topic> {
-      const data = await readData(); const topic = data.topics.find((item) => item.id === id); if (!topic) throw new Error(`Topic not found: ${id}`);
-      if (patch.name !== undefined) { topic.name = patch.name.trim() || topic.name; topic.slug = slugifyNodeName(topic.name); }
-      if (patch.description !== undefined) topic.description = patch.description.trim();
-      if (patch.aliases !== undefined) topic.aliases = parseAliases(patch.aliases);
-      topic.updatedAt = nowIso(); await writeData(data); return topic;
+      return updateData((data) => { const topic = data.topics.find((item) => item.id === id); if (!topic) throw new Error(`Topic not found: ${id}`);
+        if (patch.name !== undefined) { topic.name = patch.name.trim() || topic.name; topic.slug = slugifyNodeName(topic.name); }
+        if (patch.description !== undefined) topic.description = patch.description.trim();
+        if (patch.aliases !== undefined) topic.aliases = parseAliases(patch.aliases);
+        topic.updatedAt = nowIso(); return topic; });
     },
     async mergeTopic(sourceId: string, targetId: string): Promise<Topic> {
       if (sourceId === targetId) throw new Error("Cannot merge a topic into itself");
@@ -242,17 +335,17 @@ export function createLibraryStore(options: StoreOptions = {}) {
       data.topics = data.topics.filter((item) => item.id !== sourceId); await writeData(data); return target;
     },
     async deleteTopic(id: string): Promise<void> {
-      const data = await readData(); data.topics = data.topics.filter((topic) => topic.id !== id);
-      for (const block of data.blocks) block.topicLinks = block.topicLinks.filter((link) => link.topicId !== id);
-      await writeData(data);
+      await updateData((data) => { data.topics = data.topics.filter((topic) => topic.id !== id);
+        for (const block of data.blocks) block.topicLinks = block.topicLinks.filter((link) => link.topicId !== id);
+      });
     },
     async updateNode(id: string, patch: { name?: string; description?: string; aliases?: string[] | string; type?: string }): Promise<WikiNode> {
-      const data = await readData(); const node = data.nodes.find((item) => item.id === id); if (!node) throw new Error(`Node not found: ${id}`);
-      if (patch.name !== undefined) { node.name = patch.name.trim() || node.name; node.slug = slugifyNodeName(node.name); }
-      if (patch.description !== undefined) node.description = patch.description.trim();
-      if (patch.aliases !== undefined) node.aliases = parseAliases(patch.aliases);
-      if (patch.type !== undefined) node.type = coerceNodeType(patch.type);
-      node.updatedAt = nowIso(); await writeData(data); return node;
+      return updateData((data) => { const node = data.nodes.find((item) => item.id === id); if (!node) throw new Error(`Node not found: ${id}`);
+        if (patch.name !== undefined) { node.name = patch.name.trim() || node.name; node.slug = slugifyNodeName(node.name); }
+        if (patch.description !== undefined) node.description = patch.description.trim();
+        if (patch.aliases !== undefined) node.aliases = parseAliases(patch.aliases);
+        if (patch.type !== undefined) node.type = coerceNodeType(patch.type);
+        node.updatedAt = nowIso(); return node; });
     },
     async mergeNode(sourceId: string, targetId: string): Promise<WikiNode> {
       if (sourceId === targetId) throw new Error("Cannot merge a node into itself");
@@ -269,31 +362,52 @@ export function createLibraryStore(options: StoreOptions = {}) {
       data.nodes = data.nodes.filter((item) => item.id !== sourceId); await writeData(data); return target;
     },
     async deleteNode(id: string): Promise<void> {
-      const data = await readData(); data.nodes = data.nodes.filter((node) => node.id !== id);
-      for (const block of data.blocks) block.nodeLinks = block.nodeLinks.filter((link) => link.nodeId !== id);
-      await writeData(data);
+      await updateData((data) => { data.nodes = data.nodes.filter((node) => node.id !== id);
+        for (const block of data.blocks) block.nodeLinks = block.nodeLinks.filter((link) => link.nodeId !== id);
+      });
     },
 
     async listJobs(): Promise<Job[]> { return (await readData()).jobs; },
     async listJobsWithBlocks(): Promise<Array<{ job: Job; block: Block | null }>> { const data = await readData(); return data.jobs.map((job) => ({ job, block: data.blocks.find((block) => block.id === job.blockId) ?? null })); },
     async getJobSummary(): Promise<Record<Job["status"], number>> { const data = await readData(); const summary: Record<Job["status"], number> = { queued: 0, running: 0, done: 0, failed: 0 }; for (const job of data.jobs) summary[job.status] += 1; return summary; },
     async enqueueBlockJob(blockId: string, type: Job["type"]): Promise<Job> {
-      const data = await readData(); const block = data.blocks.find((item) => item.id === blockId); if (!block) throw new Error(`Block not found: ${blockId}`);
-      const existing = data.jobs.find((job) => job.blockId === blockId && job.type === type && ["queued", "running"].includes(job.status)); if (existing) return existing;
-      const timestamp = nowIso(); const job: Job = { id: makeId("job"), type, blockId, status: "queued", error: null, createdAt: timestamp, updatedAt: timestamp };
-      data.jobs.push(job); await writeData(data); return job;
+      return updateData((data) => {
+        recoverStaleRunningJobs(data);
+        const block = data.blocks.find((item) => item.id === blockId); if (!block) throw new Error(`Block not found: ${blockId}`);
+        const existing = data.jobs.find((job) => job.blockId === blockId && job.type === type && ["queued", "running"].includes(job.status)); if (existing) return existing;
+        const timestamp = nowIso(); const job: Job = { id: makeId("job"), type, blockId, status: "queued", error: null, attempts: 0, maxAttempts: maxJobAttempts, claimedAt: null, lastError: null, lastErrorAt: null, errorHistory: [], createdAt: timestamp, updatedAt: timestamp };
+        data.jobs.push(job); return job;
+      });
     },
     async enqueueProcessBlock(blockId: string): Promise<Job> { return this.enqueueBlockJob(blockId, "process_block"); },
     async enqueueAnalyzeBlock(blockId: string): Promise<Job> { return this.enqueueBlockJob(blockId, "analyze_block"); },
     async enqueueRecaptureBlock(blockId: string): Promise<Job> { return this.enqueueBlockJob(blockId, "recapture_block"); },
     async retryBlockProcessing(blockId: string): Promise<Job> {
-      const data = await readData(); const block = data.blocks.find((item) => item.id === blockId); if (!block) throw new Error(`Block not found: ${blockId}`);
-      block.status = "pending"; block.metadata = { ...block.metadata, extractionError: undefined, screenshotError: undefined }; block.updatedAt = nowIso();
-      await writeData(data); return this.enqueueProcessBlock(blockId);
+      await updateData((data) => { const block = data.blocks.find((item) => item.id === blockId); if (!block) throw new Error(`Block not found: ${blockId}`);
+        block.status = "pending"; block.metadata = { ...block.metadata, extractionError: undefined, screenshotError: undefined }; block.updatedAt = nowIso(); });
+      return this.enqueueProcessBlock(blockId);
     },
-    async claimNextJob(): Promise<Job | null> { const data = await readData(); const job = data.jobs.find((item) => item.status === "queued"); if (!job) return null; job.status = "running"; job.updatedAt = nowIso(); await writeData(data); return job; },
-    async markJobDone(jobId: string): Promise<Job> { const data = await readData(); const job = data.jobs.find((item) => item.id === jobId); if (!job) throw new Error(`Job not found: ${jobId}`); job.status = "done"; job.error = null; job.updatedAt = nowIso(); await writeData(data); return job; },
-    async markJobFailed(jobId: string, error: string): Promise<Job> { const data = await readData(); const job = data.jobs.find((item) => item.id === jobId); if (!job) throw new Error(`Job not found: ${jobId}`); job.status = "failed"; job.error = error; job.updatedAt = nowIso(); const block = data.blocks.find((item) => item.id === job.blockId); if (block) { block.status = "failed"; block.updatedAt = nowIso(); } await writeData(data); return job; },
+    async claimNextJob(): Promise<Job | null> {
+      return updateData((data) => {
+        const timestamp = nowIso(); recoverStaleRunningJobs(data, timestamp);
+        const job = data.jobs.find((item) => item.status === "queued"); if (!job) return null;
+        job.status = "running"; job.claimedAt = timestamp; job.attempts = (job.attempts ?? 0) + 1; job.maxAttempts = job.maxAttempts ?? maxJobAttempts; job.updatedAt = timestamp;
+        return job;
+      });
+    },
+    async markJobDone(jobId: string): Promise<Job> {
+      return updateData((data) => { const job = data.jobs.find((item) => item.id === jobId); if (!job) throw new Error(`Job not found: ${jobId}`); job.status = "done"; job.error = null; job.lastError = null; job.lastErrorAt = null; job.claimedAt = null; job.updatedAt = nowIso(); return job; });
+    },
+    async markJobFailed(jobId: string, error: string): Promise<Job> {
+      return updateData((data) => {
+        const job = data.jobs.find((item) => item.id === jobId); if (!job) throw new Error(`Job not found: ${jobId}`);
+        const timestamp = nowIso(); const attempt = job.attempts ?? 0; const maxAttemptsForJob = job.maxAttempts ?? maxJobAttempts;
+        job.error = error; job.lastError = error; job.lastErrorAt = timestamp; job.errorHistory = [...(job.errorHistory ?? []), { at: timestamp, message: error, attempt }]; job.updatedAt = timestamp; job.claimedAt = null;
+        if (attempt < maxAttemptsForJob) job.status = "queued";
+        else { job.status = "failed"; const block = data.blocks.find((item) => item.id === job.blockId); if (block) { block.status = "failed"; block.updatedAt = timestamp; } }
+        return job;
+      });
+    },
     async runNextJob(): Promise<boolean> {
       const job = await this.claimNextJob(); if (!job) return false;
       try {

@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -49,5 +49,21 @@ describe("library store", () => {
     const nodes = await store.listNodes();
     const foliumNodes = nodes.filter((node) => node.slug === "are-na");
     expect(foliumNodes).toHaveLength(1);
+  });
+
+  it("preserves all blocks during concurrent creates", async () => {
+    const store = createLibraryStore({ dataDir: dir, enableNetwork: false });
+
+    await Promise.all(Array.from({ length: 20 }, (_, index) => store.createUrlBlock(`https://example.com/${index}`)));
+
+    expect(await store.listBlocks()).toHaveLength(20);
+  });
+
+  it("throws on corrupt library JSON instead of resetting data", async () => {
+    const store = createLibraryStore({ dataDir: dir, enableNetwork: false });
+    await store.createUrlBlock("https://example.com/a");
+    await writeFile(join(dir, "library.json"), "{ bad json", "utf8");
+
+    await expect(store.listBlocks()).rejects.toThrow();
   });
 });

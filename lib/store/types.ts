@@ -86,12 +86,24 @@ export type Topic = {
 export type JobStatus = "queued" | "running" | "done" | "failed";
 export type JobType = "process_block" | "analyze_block" | "recapture_block";
 
+export type JobErrorHistoryEntry = {
+  at: string;
+  message: string;
+  attempt: number;
+};
+
 export type Job = {
   id: string;
   type: JobType;
   blockId: string;
   status: JobStatus;
   error: string | null;
+  attempts?: number;
+  maxAttempts?: number;
+  claimedAt?: string | null;
+  lastError?: string | null;
+  lastErrorAt?: string | null;
+  errorHistory?: JobErrorHistoryEntry[];
   createdAt: string;
   updatedAt: string;
 };

@@ -195,9 +195,9 @@ Completed foundation:
 
 Reliability and deployment:
 
-- [ ] Add atomic JSON writes and file locking for library/job storage.
-- [ ] Reset stale running jobs after a configurable timeout.
-- [ ] Add retry policy, max attempts, and last-error history for processing jobs.
+- [x] Add atomic JSON writes and file locking for library/job storage.
+- [x] Reset stale running jobs after a configurable timeout.
+- [x] Add retry policy, max attempts, and last-error history for processing jobs.
 - [ ] Add richer worker health checks and processing diagnostics.
 - [ ] Add production-ready Docker health checks for web and worker.
 - [ ] Add example systemd units.
