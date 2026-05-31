@@ -2,7 +2,7 @@
 
 Folium includes an early in-repo CLI for agent-friendly save, search, get, and status workflows.
 
-The CLI talks to the Folium HTTP API using an API token. Generate a token from **Settings → Agent API**. Tokens are shown once; keep them private.
+The CLI talks to the Folium HTTP API using an API token. Generate a token from **Settings → Agent API**. Tokens are shown once; keep them private. Folium currently keeps one active Agent API token: generating a new token replaces the previous token, and revoke clears the current token.
 
 ## Local development
 

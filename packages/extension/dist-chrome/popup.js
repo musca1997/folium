@@ -77,43 +77,57 @@ async function captureVisibleScreenshot() {
     return promisify((callback) => extensionApi.tabs.captureVisibleTab(null, { format: "jpeg", quality: 72 }, callback)).catch(() => "");
 }
 async function clip(useSelection) {
-    const config = await getConfig();
-    const baseUrl = normalizeBaseUrl(config.url ?? "");
-    if (!baseUrl || !config.token)
-        throw new Error("Configure Folium URL and API token first.");
-    const tab = await getActiveTab();
-    const [{ result }] = await promisify((callback) => extensionApi.scripting.executeScript({ target: { tabId: tab.id }, func: readPage }, callback));
-    if (!result)
-        throw new Error("Could not read current page.");
-    const page = result;
-    const contentText = useSelection && page.selectionText.trim() ? page.selectionText : page.contentText;
-    if (contentText.trim().length < 20)
-        throw new Error("No readable text found on this page.");
-    const screenshotDataUrl = await captureVisibleScreenshot();
-    const response = await fetch(`${baseUrl}/api/clip`, {
-        method: "POST",
-        headers: {
-            "content-type": "application/json",
-            authorization: `Bearer ${config.token}`,
-        },
-        body: JSON.stringify({
-            url: page.url,
-            title: page.title,
-            description: page.description,
-            canonicalUrl: page.canonicalUrl,
-            contentText,
-            htmlContent: useSelection ? "" : page.htmlContent,
-            previewImage: page.previewImage,
-            favicon: page.favicon,
-            screenshotDataUrl,
-            visibility: visibilityInput.value === "public" ? "public" : "private",
-            source: "browser_extension",
-        }),
-    });
-    const body = await response.json().catch(() => null);
-    if (!response.ok)
-        throw new Error(body?.error ?? `Folium returned ${response.status}`);
-    setStatus(`${body?.duplicate ? "Updated existing" : "Saved"}: ${body?.block?.title ?? body?.block?.id ?? "block"}`);
+    savePageButton.disabled = true;
+    saveSelectionButton.disabled = true;
+    try {
+        setStatus("Checking settings...");
+        const config = await getConfig();
+        const baseUrl = normalizeBaseUrl(config.url ?? "");
+        if (!baseUrl || !config.token)
+            throw new Error("Configure Folium URL and API token first.");
+        setStatus("Reading current page...");
+        const tab = await getActiveTab();
+        const [{ result }] = await promisify((callback) => extensionApi.scripting.executeScript({ target: { tabId: tab.id }, func: readPage }, callback));
+        if (!result)
+            throw new Error("Could not read current page.");
+        const page = result;
+        const contentText = useSelection && page.selectionText.trim() ? page.selectionText : page.contentText;
+        if (contentText.trim().length < 20)
+            throw new Error("No readable text found on this page.");
+        setStatus(useSelection && page.selectionText.trim() ? "Preparing selected text..." : "Preparing page text...");
+        setStatus("Capturing screenshot...");
+        const screenshotDataUrl = await captureVisibleScreenshot();
+        setStatus("Sending to Folium...");
+        const response = await fetch(`${baseUrl}/api/clip`, {
+            method: "POST",
+            headers: {
+                "content-type": "application/json",
+                authorization: `Bearer ${config.token}`,
+            },
+            body: JSON.stringify({
+                url: page.url,
+                title: page.title,
+                description: page.description,
+                canonicalUrl: page.canonicalUrl,
+                contentText,
+                htmlContent: useSelection ? "" : page.htmlContent,
+                previewImage: page.previewImage,
+                favicon: page.favicon,
+                screenshotDataUrl,
+                visibility: visibilityInput.value === "public" ? "public" : "private",
+                source: "browser_extension",
+            }),
+        });
+        setStatus("Waiting for Folium...");
+        const body = await response.json().catch(() => null);
+        if (!response.ok)
+            throw new Error(body?.error ?? `Folium returned ${response.status}`);
+        setStatus(`${body?.duplicate ? "Updated existing" : "Saved"}: ${body?.block?.title ?? body?.block?.id ?? "block"}. Analysis queued.`);
+    }
+    finally {
+        savePageButton.disabled = false;
+        saveSelectionButton.disabled = false;
+    }
 }
 async function init() {
     const config = await getConfig();

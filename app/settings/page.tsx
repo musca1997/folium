@@ -87,7 +87,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           <section className="grid gap-6 md:grid-cols-[minmax(0,1fr)_260px]">
             <div className="space-y-4 border border-line p-5">
               <p className="text-xs uppercase tracking-wide text-muted">Agent API</p>
-              <p className="text-sm leading-relaxed text-muted">Create an API token for the Folium CLI and agent workflows. The token is shown once.</p>
+              <p className="text-sm leading-relaxed text-muted">Create an API token for the Folium CLI, browser extension, and agent workflows. The token is shown once. Generating a new token replaces the previous one.</p>
               {apiToken ? (
                 <div className="border border-line bg-soft p-3">
                   <p className="text-xs uppercase tracking-wide text-muted">New token</p>
@@ -108,7 +108,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             </div>
             <aside className="border border-line p-5 text-sm leading-relaxed text-muted">
               <p className="text-xs uppercase tracking-wide">CLI access</p>
-              <p className="mt-3">Use API tokens for command-line and agent access. Keep tokens private and revoke them if exposed.</p>
+              <p className="mt-3">Use API tokens for command-line, extension, and agent access. Keep tokens private and revoke them if exposed.</p>
             </aside>
           </section>
 
