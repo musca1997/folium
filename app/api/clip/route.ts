@@ -3,6 +3,20 @@ import { serializeBlock } from "@/lib/api/serialize";
 import { assertSafePublicUrl } from "@/lib/security/urlSafety";
 import { libraryStore } from "@/lib/store/library";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, content-type",
+};
+
+function json(data: unknown, init?: ResponseInit) {
+  return Response.json(data, { ...init, headers: { ...corsHeaders, ...(init?.headers ?? {}) } });
+}
+
+export function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}
+
 function asString(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
@@ -19,15 +33,15 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const inputUrl = asString(body?.url).trim();
-  if (!inputUrl) return Response.json({ error: "missing_url" }, { status: 400 });
+  if (!inputUrl) return json({ error: "missing_url" }, { status: 400 });
 
   let url: string;
   try { url = await assertSafePublicUrl(inputUrl); } catch (error) {
-    return Response.json({ error: "unsafe_url", message: error instanceof Error ? error.message : "URL rejected" }, { status: 400 });
+    return json({ error: "unsafe_url", message: error instanceof Error ? error.message : "URL rejected" }, { status: 400 });
   }
 
   const contentText = asString(body?.contentText).trim();
-  if (contentText.length < 20) return Response.json({ error: "content_too_short" }, { status: 400 });
+  if (contentText.length < 20) return json({ error: "content_too_short" }, { status: 400 });
 
   const visibility = body?.visibility === "public" ? "public" : "private";
   const result = await libraryStore.addUrlBlock(url, visibility);
@@ -42,5 +56,5 @@ export async function POST(request: Request) {
     extractionMethod: "browser_extension",
   });
   const [nodes, topics] = await Promise.all([libraryStore.listNodes(), libraryStore.listTopics()]);
-  return Response.json({ block: serializeBlock(block, nodes, topics), created: result.created, duplicate: result.duplicate, queued: true }, { status: result.created ? 201 : 200 });
+  return json({ block: serializeBlock(block, nodes, topics), created: result.created, duplicate: result.duplicate, queued: true }, { status: result.created ? 201 : 200 });
 }
