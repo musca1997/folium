@@ -36,6 +36,9 @@ export default function AboutPage() {
               It captures readable text and visual previews, then uses LLM assistance to connect pages through broad topics, reusable wiki nodes,
               references, and graph relationships. The goal is a curated library, not a noisy feed.
             </p>
+            <div className="mt-5 flex flex-wrap gap-2 text-sm">
+              <Link href="https://github.com/musca1997/folium" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">GitHub</Link>
+            </div>
           </div>
           <div className="border border-line p-5">
             <p className="text-xs uppercase tracking-wide text-muted">Built for self-hosting</p>
@@ -201,9 +204,7 @@ folium pin blk_xxx --json
 folium private blk_xxx --json
 folium extract https://example.com --json`}</code></pre>
             <div className="mt-5 flex flex-wrap gap-2 text-sm">
-              <Link href="https://github.com/musca1997/folium" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">GitHub</Link>
               <Link href="https://github.com/musca1997/folium/blob/master/docs/cli.md" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">CLI docs</Link>
-              <Link href="https://github.com/musca1997/folium/blob/master/docs/extension.md" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">Extension docs</Link>
               <Link href="https://github.com/musca1997/folium/blob/master/skills/folium/SKILL.md" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">Agent skill</Link>
             </div>
           </section>
