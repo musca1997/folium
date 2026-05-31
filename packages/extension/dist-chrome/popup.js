@@ -1,4 +1,26 @@
 "use strict";
+const detectedApi = window.browser ?? window.chrome;
+if (!detectedApi)
+    throw new Error("Extension API is not available.");
+const extensionApi = detectedApi;
+function promisify(call) {
+    return new Promise((resolve, reject) => {
+        try {
+            const maybePromise = call((value) => {
+                const error = extensionApi.runtime?.lastError?.message;
+                if (error)
+                    reject(new Error(error));
+                else
+                    resolve(value);
+            });
+            if (maybePromise && typeof maybePromise.then === "function")
+                maybePromise.then(resolve, reject);
+        }
+        catch (error) {
+            reject(error);
+        }
+    });
+}
 const statusEl = document.getElementById("status");
 const currentUrlEl = document.getElementById("current-url");
 const foliumUrlInput = document.getElementById("folium-url");
@@ -14,13 +36,13 @@ function normalizeBaseUrl(value) {
     return value.trim().replace(/\/+$/g, "");
 }
 async function getConfig() {
-    return chrome.storage.local.get(["url", "token", "visibility"]);
+    return promisify((callback) => extensionApi.storage.local.get(["url", "token", "visibility"], callback));
 }
 async function setConfig(config) {
-    await chrome.storage.local.set(config);
+    await promisify((callback) => extensionApi.storage.local.set(config, callback));
 }
 async function getActiveTab() {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const [tab] = await promisify((callback) => extensionApi.tabs.query({ active: true, currentWindow: true }, callback));
     if (!tab?.id || !tab.url)
         throw new Error("No active tab");
     return tab;
@@ -57,7 +79,7 @@ async function clip(useSelection) {
     if (!baseUrl || !config.token)
         throw new Error("Configure Folium URL and API token first.");
     const tab = await getActiveTab();
-    const [{ result }] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: readPage });
+    const [{ result }] = await promisify((callback) => extensionApi.scripting.executeScript({ target: { tabId: tab.id }, func: readPage }, callback));
     if (!result)
         throw new Error("Could not read current page.");
     const page = result;

@@ -16,6 +16,25 @@ type ClippedPage = {
   favicon: string | null;
 };
 
+const detectedApi = window.browser ?? window.chrome;
+if (!detectedApi) throw new Error("Extension API is not available.");
+const extensionApi: ExtensionApi = detectedApi;
+
+function promisify<T>(call: (callback: (value: T) => void) => Promise<T> | void): Promise<T> {
+  return new Promise((resolve, reject) => {
+    try {
+      const maybePromise = call((value) => {
+        const error = extensionApi.runtime?.lastError?.message;
+        if (error) reject(new Error(error));
+        else resolve(value);
+      });
+      if (maybePromise && typeof (maybePromise as Promise<T>).then === "function") (maybePromise as Promise<T>).then(resolve, reject);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
 const statusEl = document.getElementById("status") as HTMLDivElement;
 const currentUrlEl = document.getElementById("current-url") as HTMLDivElement;
 const foliumUrlInput = document.getElementById("folium-url") as HTMLInputElement;
@@ -34,15 +53,15 @@ function normalizeBaseUrl(value: string): string {
 }
 
 async function getConfig(): Promise<FoliumConfig> {
-  return chrome.storage.local.get(["url", "token", "visibility"]) as Promise<FoliumConfig>;
+  return promisify<Record<string, unknown>>((callback) => extensionApi.storage.local.get(["url", "token", "visibility"], callback)) as Promise<FoliumConfig>;
 }
 
 async function setConfig(config: FoliumConfig) {
-  await chrome.storage.local.set(config);
+  await promisify<void>((callback) => extensionApi.storage.local.set(config, callback));
 }
 
-async function getActiveTab(): Promise<chrome.tabs.Tab> {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+async function getActiveTab(): Promise<ExtensionTab> {
+  const [tab] = await promisify<ExtensionTab[]>((callback) => extensionApi.tabs.query({ active: true, currentWindow: true }, callback));
   if (!tab?.id || !tab.url) throw new Error("No active tab");
   return tab;
 }
@@ -73,7 +92,7 @@ async function clip(useSelection: boolean) {
   const baseUrl = normalizeBaseUrl(config.url ?? "");
   if (!baseUrl || !config.token) throw new Error("Configure Folium URL and API token first.");
   const tab = await getActiveTab();
-  const [{ result }] = await chrome.scripting.executeScript({ target: { tabId: tab.id! }, func: readPage });
+  const [{ result }] = await promisify<Array<{ result?: ClippedPage }>>((callback) => extensionApi.scripting.executeScript({ target: { tabId: tab.id! }, func: readPage }, callback));
   if (!result) throw new Error("Could not read current page.");
   const page = result as ClippedPage;
   const contentText = useSelection && page.selectionText.trim() ? page.selectionText : page.contentText;

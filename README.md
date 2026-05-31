@@ -217,7 +217,7 @@ Data quality and curation:
 
 Agent API, CLI, and integrations:
 
-- [x] Add browser extension / web clipper for saving login-gated and verification-gated pages.
+- [x] Add browser extension / web clipper for Chrome/Chromium and Firefox, for saving login-gated and verification-gated pages.
 - [ ] Add automated tests for API routes and CLI commands.
 - [ ] Package the Folium CLI for local install and npm publishing.
 - [ ] Add named API tokens with created-at, last-used-at, and revoke controls.

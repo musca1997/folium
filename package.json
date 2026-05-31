@@ -13,7 +13,10 @@
     "worker:once": "tsx -r tsconfig-paths/register scripts/worker.ts --once",
     "cli": "tsx packages/cli/src/index.ts",
     "cli:build": "tsc -p packages/cli/tsconfig.json",
-    "extension:build": "tsc -p packages/extension/tsconfig.json && cp packages/extension/manifest.json packages/extension/popup.html packages/extension/dist/",
+    "extension:build": "npm run extension:build:chrome && npm run extension:build:firefox",
+    "extension:build:chrome": "rm -rf packages/extension/dist-chrome && tsc -p packages/extension/tsconfig.json --outDir packages/extension/dist-chrome && cp packages/extension/manifest.chrome.json packages/extension/dist-chrome/manifest.json && cp packages/extension/popup.html packages/extension/dist-chrome/",
+    "extension:build:firefox": "rm -rf packages/extension/dist-firefox && tsc -p packages/extension/tsconfig.json --outDir packages/extension/dist-firefox && cp packages/extension/manifest.firefox.json packages/extension/dist-firefox/manifest.json && cp packages/extension/popup.html packages/extension/dist-firefox/",
+    "extension:build:legacy": "rm -rf packages/extension/dist && tsc -p packages/extension/tsconfig.json --outDir packages/extension/dist && cp packages/extension/manifest.chrome.json packages/extension/dist/manifest.json && cp packages/extension/popup.html packages/extension/dist/",
     "dev:all": "bash scripts/dev-all.sh",
     "start:all": "bash scripts/start-all.sh"
   },

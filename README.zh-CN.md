@@ -217,7 +217,7 @@ Folium 使用 Apache License, Version 2.0 授权。详情见 [LICENSE](./LICENSE
 
 Agent API、CLI 与集成：
 
-- [x] 添加浏览器扩展 / web clipper，用于保存登录墙和浏览器验证页面。
+- [x] 添加支持 Chrome/Chromium 和 Firefox 的浏览器扩展 / web clipper，用于保存登录墙和浏览器验证页面。
 - [ ] 为 API routes 和 CLI commands 添加自动化测试。
 - [ ] 打包 Folium CLI，支持本地安装和 npm 发布。
 - [ ] 添加 named API tokens，包含 created-at、last-used-at 和 revoke 控制。

@@ -12,10 +12,11 @@ From the repository root:
 npm run extension:build
 ```
 
-The unpacked extension is written to:
+The browser-specific unpacked extensions are written to:
 
 ```txt
-packages/extension/dist
+packages/extension/dist-chrome
+packages/extension/dist-firefox
 ```
 
 ## Load in Chrome or Chromium
@@ -23,7 +24,15 @@ packages/extension/dist
 1. Open `chrome://extensions`.
 2. Enable **Developer mode**.
 3. Click **Load unpacked**.
-4. Select `packages/extension/dist`.
+4. Select `packages/extension/dist-chrome`.
+
+## Load in Firefox
+
+1. Open `about:debugging#/runtime/this-firefox`.
+2. Click **Load Temporary Add-on...**.
+3. Select `packages/extension/dist-firefox/manifest.json`.
+
+Firefox temporary add-ons are removed when Firefox restarts. For long-term Firefox use, package and sign the extension through Mozilla Add-ons or use a Firefox build/profile that allows unsigned extensions.
 
 ## Configure
 

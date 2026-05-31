@@ -1,15 +1,27 @@
-declare namespace chrome {
-  namespace storage {
-    const local: {
-      get(keys: string[]): Promise<Record<string, unknown>>;
-      set(items: Record<string, unknown>): Promise<void>;
+type ExtensionTab = { id?: number; url?: string };
+
+type ExtensionApi = {
+  storage: {
+    local: {
+      get(keys: string[], callback?: (items: Record<string, unknown>) => void): Promise<Record<string, unknown>> | void;
+      set(items: Record<string, unknown>, callback?: () => void): Promise<void> | void;
     };
-  }
-  namespace tabs {
-    type Tab = { id?: number; url?: string };
-    function query(queryInfo: { active: boolean; currentWindow: boolean }): Promise<Tab[]>;
-  }
-  namespace scripting {
-    function executeScript<T>(options: { target: { tabId: number }; func: () => T }): Promise<Array<{ result?: T }>>;
-  }
+  };
+  tabs: {
+    query(queryInfo: { active: boolean; currentWindow: boolean }, callback?: (tabs: ExtensionTab[]) => void): Promise<ExtensionTab[]> | void;
+  };
+  scripting: {
+    executeScript<T>(options: { target: { tabId: number }; func: () => T }, callback?: (results: Array<{ result?: T }>) => void): Promise<Array<{ result?: T }>> | void;
+  };
+  runtime?: {
+    lastError?: { message?: string };
+  };
+};
+
+declare const chrome: ExtensionApi | undefined;
+declare const browser: ExtensionApi | undefined;
+
+interface Window {
+  chrome?: ExtensionApi;
+  browser?: ExtensionApi;
 }

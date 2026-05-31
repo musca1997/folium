@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json && cp manifest.json popup.html dist/"
+    "build": "npm run build:chrome && npm run build:firefox",
+    "build:chrome": "rm -rf dist-chrome && tsc -p tsconfig.json --outDir dist-chrome && cp manifest.chrome.json dist-chrome/manifest.json && cp popup.html dist-chrome/",
+    "build:firefox": "rm -rf dist-firefox && tsc -p tsconfig.json --outDir dist-firefox && cp manifest.firefox.json dist-firefox/manifest.json && cp popup.html dist-firefox/"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.306",
