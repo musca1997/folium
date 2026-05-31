@@ -63,6 +63,39 @@ describe("ensureDomainTopicCoverage", () => {
 
     expect(result.topics[0]?.name).toBe("Philosophy");
   });
+
+  it("promotes wireless communication for LoRa mesh communities", () => {
+    const result = ensureDomainTopicCoverage("https://meshcn.net", {
+      title: "MeshCN - Meshtastic 中国社区",
+      description: "在中国建立太阳能供电的 Meshtastic 无线电网络。",
+      textContent: "LoRa communication network Meshtastic mesh networking off-grid emergency communication solar nodes",
+    }, {
+      summary: "A Meshtastic community site.",
+      topics: [
+        { name: "Self-hosting", description: "Personal infrastructure.", confidence: 0.6, claims: [], evidence: [] },
+        { name: "Cybersecurity", description: "Security topics.", confidence: 0.52, claims: [], evidence: [] },
+      ],
+      nodes: [
+        { type: "Technology", name: "Meshtastic", description: "LoRa mesh communication technology.", relevance: 0.94, claims: [], evidence: [] },
+        { type: "Technology", name: "LoRa", description: "Long-range radio technology.", relevance: 0.9, claims: [], evidence: [] },
+      ],
+    });
+
+    expect(result.topics[0]?.name).toBe("Wireless Communication");
+  });
+
+  it("promotes hardware and electronics for embedded device projects", () => {
+    const result = ensureDomainTopicCoverage("https://example.com/device", {
+      title: "TinyLora V3 solar ESP32 node build",
+      textContent: "embedded hardware ESP32 microcontroller PCB soldering battery solar sensor module electronics",
+    }, {
+      summary: "A hardware build guide.",
+      topics: [{ name: "Tutorials", description: "Guides.", confidence: 0.7, claims: [], evidence: [] }],
+      nodes: [{ type: "Technology", name: "ESP32", description: "Microcontroller hardware.", relevance: 0.9, claims: [], evidence: [] }],
+    });
+
+    expect(result.topics[0]?.name).toBe("Hardware and Electronics");
+  });
 });
 
 describe("analyzeUrl", () => {
