@@ -9,11 +9,11 @@ export async function Header() {
       <nav className="mx-auto flex max-w-7xl items-center justify-end text-sm">
         <div className="flex items-center gap-5 text-muted">
           <Link href="/" className="font-semibold text-ink">Library</Link>
-          <Link href="/about">About</Link>
           <Link href="/topics">Topics</Link>
           <Link href="/nodes">Nodes</Link>
           <Link href="/graph">Graph</Link>
           {authed ? <Link href="/processing">Processing</Link> : null}
+          <Link href="/about">About</Link>
           {authed ? (
             <Link href="/settings" className="border border-ink px-3 py-1 text-ink hover:bg-ink hover:text-white">Account</Link>
           ) : (

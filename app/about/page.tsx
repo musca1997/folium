@@ -42,6 +42,7 @@ export default function AboutPage() {
           </p>
           <div className="mt-5 flex flex-wrap gap-2 text-sm">
             <Link href="/" className="border border-ink px-3 py-2 hover:bg-ink hover:text-white">Open library</Link>
+            <Link href="/agents" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">Agents</Link>
             <Link href="https://github.com/musca1997/folium" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">GitHub</Link>
           </div>
         </section>
