@@ -182,38 +182,39 @@ Folium is licensed under the Apache License, Version 2.0. See [LICENSE](./LICENS
 
 Near-term:
 
-- More detailed worker health checks and stuck-job recovery.
-- More transparent extraction logs and retry diagnostics per block.
-- Finish taxonomy management UI for rename, aliases, merge, delete, and canonical review flows.
-- Browser bookmarklet / extension for one-click saving.
-- Import/export for Netscape bookmarks, JSON, Markdown, Linkding, Raindrop, and similar tools.
-- Configurable AI style prompt, preferred language, and taxonomy granularity.
+- [ ] Add a Library list view alongside the visual grid for denser browsing.
+- [ ] More detailed worker health checks and stuck-job recovery.
+- [ ] More transparent extraction logs and retry diagnostics per block.
+- [ ] Finish taxonomy management UI for rename, aliases, merge, delete, and canonical review flows.
+- [ ] Browser bookmarklet / extension for one-click saving.
+- [ ] Import/export for Netscape bookmarks, JSON, Markdown, Linkding, Raindrop, and similar tools.
+- [ ] Configurable AI style prompt, preferred language, and taxonomy granularity.
 
 Storage and search:
 
-- Move from JSON storage to SQLite or Postgres.
-- Add full-text search indexes.
-- Add embeddings and semantic search, likely with pgvector or a local vector index.
-- Add safer queue locking and stuck-job recovery.
+- [ ] Move from JSON storage to SQLite or Postgres.
+- [ ] Add full-text search indexes.
+- [ ] Add embeddings and semantic search, likely with pgvector or a local vector index.
+- [ ] Add safer queue locking and stuck-job recovery.
 
 Knowledge graph and curation:
 
-- Better edge extraction between nodes, topics, and saved sources.
-- Evidence-backed claims with clearer provenance and confidence.
-- Graph search, hover highlighting, selected-node 1-hop/2-hop mode, and low-signal node hiding.
-- Manual review workflow for taxonomy suggestions before they affect the global graph.
+- [ ] Better edge extraction between nodes, topics, and saved sources.
+- [ ] Evidence-backed claims with clearer provenance and confidence.
+- [ ] Graph search, hover highlighting, selected-node 1-hop/2-hop mode, and low-signal node hiding.
+- [ ] Manual review workflow for taxonomy suggestions before they affect the global graph.
 
 Content support:
 
-- PDF extraction.
-- Image upload and OCR.
-- YouTube transcript support.
-- Browser-rendered extraction improvements for difficult sites.
-- Optional local-first archiving of readable HTML/text.
+- [ ] PDF extraction.
+- [ ] Image upload and OCR.
+- [ ] YouTube transcript support.
+- [ ] Browser-rendered extraction improvements for difficult sites.
+- [ ] Optional local-first archiving of readable HTML/text.
 
 Deployment and product hardening:
 
-- Better Docker health checks.
-- Example systemd units.
-- Stronger production security guidance.
-- Optional multi-user or team model after the single-user experience is stable.
+- [ ] Better Docker health checks.
+- [ ] Example systemd units.
+- [ ] Stronger production security guidance.
+- [ ] Optional multi-user or team model after the single-user experience is stable.
