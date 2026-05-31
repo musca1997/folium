@@ -17,11 +17,12 @@ describe("LLM topic parsing", () => {
     expect(result.topics[0]?.name).toBe("Cybersecurity");
   });
 
-  it("filters invalid topic confidence values", () => {
+  it("filters invalid and weak topic confidence values", () => {
     const result = parseLlmAnalysis(JSON.stringify({
       summary: "Summary.",
       topics: [
         { name: "Valid", description: "Valid topic", confidence: 0.5 },
+        { name: "Weak", description: "Weak topic", confidence: 0.22 },
         { name: "Invalid", description: "Invalid topic", confidence: 2 }
       ],
       nodes: []

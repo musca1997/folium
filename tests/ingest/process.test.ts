@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { analyzeUrl, buildAnalysisPrompt } from "@/lib/ingest/process";
+import { analyzeUrl, buildAnalysisPrompt, ensureDomainTopicCoverage } from "@/lib/ingest/process";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -19,6 +19,22 @@ describe("buildAnalysisPrompt", () => {
     expect(prompt).toContain("nodes");
     expect(prompt).toContain("Existing topics:");
     expect(prompt).toContain("Digital gardens");
+  });
+});
+
+describe("ensureDomainTopicCoverage", () => {
+  it("adds a music topic for clearly musical references when LLM topics miss it", () => {
+    const result = ensureDomainTopicCoverage("https://example.com/music", {
+      title: "MusoRepo: a Directory of Resources for Computational Musicology",
+      description: "A directory of resources for computational musicology.",
+      textContent: "symbolic scores musicology music21 MEI musical resources",
+    }, {
+      summary: "A musicology resource directory.",
+      topics: [{ name: "Web Curation", description: "Curated link directories.", confidence: 0.94, claims: [], evidence: [] }],
+      nodes: [{ type: "Concept", name: "Computational musicology", description: "Music research with computation.", relevance: 0.9, claims: [], evidence: [] }],
+    });
+
+    expect(result.topics.map((topic) => topic.name)).toContain("Music and Musicology");
   });
 });
 

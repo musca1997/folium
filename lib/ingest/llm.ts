@@ -82,7 +82,7 @@ export function parseLlmAnalysis(raw: string): LlmAnalysis {
   return {
     summary: parsed.summary,
     topics: parsed.topics
-      .filter((topic) => topic.confidence >= 0 && topic.confidence <= 1)
+      .filter((topic) => topic.confidence >= 0.35 && topic.confidence <= 1)
       .sort((a, b) => b.confidence - a.confidence)
       .slice(0, 2)
       .map((topic) => ({ ...topic, claims: cleanClaims(topic.claims), evidence: cleanEvidence(topic.evidence) })),

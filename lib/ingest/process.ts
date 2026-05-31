@@ -162,19 +162,46 @@ async function analyzeWithOpenAI(url: string, context: AnalyzeContext): Promise<
   return parseLlmAnalysis(content);
 }
 
-function ensureTopicCoverage(url: string, context: AnalyzeContext, analysis: LlmAnalysis): LlmAnalysis {
-  if (analysis.topics.length > 0) return analysis;
+function hasTopic(analysis: LlmAnalysis, name: string): boolean {
+  return analysis.topics.some((topic) => topic.name.toLowerCase() === name.toLowerCase());
+}
+
+function musicSignal(context: AnalyzeContext, analysis: LlmAnalysis): boolean {
+  const haystack = [
+    context.title,
+    context.description,
+    context.textContent?.slice(0, 4000),
+    ...analysis.nodes.map((node) => `${node.name} ${node.description}`),
+  ].join(" ").toLowerCase();
+  return /\b(music|musical|musicology|musicologist|composer|composition|instrument|luthier|guitar|score|scores|sound|sonic|electronic music|k-pop|song|songs)\b/.test(haystack);
+}
+
+export function ensureDomainTopicCoverage(url: string, context: AnalyzeContext, analysis: LlmAnalysis): LlmAnalysis {
+  const next: LlmAnalysis = { ...analysis, topics: [...analysis.topics] };
+  if (musicSignal(context, next) && !hasTopic(next, "Music and Musicology")) {
+    next.topics = [
+      {
+        name: "Music and Musicology",
+        description: "Music culture, composition, instruments, sound practices, and computational or historical music research.",
+        confidence: 0.82,
+        claims: ["This reference is primarily about music, musical practice, or music research."],
+        evidence: context.title ? [{ quote: context.title.slice(0, 280), source: "title" as const }] : [],
+      },
+      ...next.topics,
+    ].slice(0, 2);
+  }
+  if (next.topics.length > 0) return next;
   const domain = getDomain(url);
-  const anchor = analysis.nodes.find((node) => node.type === "Technology" || node.type === "Concept" || node.type === "Project")?.name;
+  const anchor = next.nodes.find((node) => node.type === "Technology" || node.type === "Concept" || node.type === "Project")?.name;
   const name = anchor || "Web Curation";
   return {
-    ...analysis,
+    ...next,
     topics: [{
       name,
       description: anchor ? `Saved references related to ${anchor}.` : "Saved web references and link organization.",
       confidence: 0.55,
       claims: [`${domain} was saved as a reference related to ${name}.`],
-      evidence: context.description ? [{ quote: context.description.slice(0, 280), source: "description" }] : [],
+      evidence: context.description ? [{ quote: context.description.slice(0, 280), source: "description" as const }] : [],
     }],
   };
 }
@@ -184,7 +211,7 @@ export async function analyzeUrl(url: string, context: AnalyzeContext = {}): Pro
   if (!settings.apiKey && !process.env.OPENAI_API_KEY) return fallbackAnalysisForUrl(url, context);
 
   try {
-    return ensureTopicCoverage(url, context, await analyzeWithOpenAI(url, context));
+    return ensureDomainTopicCoverage(url, context, await analyzeWithOpenAI(url, context));
   } catch {
     return fallbackAnalysisForUrl(url, context);
   }
