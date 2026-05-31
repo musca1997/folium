@@ -117,7 +117,7 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
             ) : null}
           </section>
           <aside className="space-y-5">
-            <ProcessingTimeline block={block} job={latestJob} heartbeat={heartbeat} />
+            {authed ? <ProcessingTimeline block={block} job={latestJob} heartbeat={heartbeat} /> : null}
             <div className="border border-line p-4 text-sm">
               <p className="mb-3 text-xs uppercase tracking-wide text-muted">Details</p>
               <dl className="space-y-3">
@@ -151,7 +151,7 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
               <p className="mb-3 text-xs uppercase tracking-wide text-muted">Reference</p>
               <EvidenceList block={block} nodes={nodes} topics={topics} />
             </div>
-            {block.status !== "indexed" && block.status !== "failed" ? (
+            {authed && block.status !== "indexed" && block.status !== "failed" ? (
               <div className="border border-line p-4 text-sm text-muted">
                 {heartbeat?.online ? "The worker is online. This page refreshes while processing." : "The background worker is offline. Queued processing will resume when it is running."}
               </div>
