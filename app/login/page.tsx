@@ -34,7 +34,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <aside className="border border-line p-5 text-sm leading-relaxed text-muted">
             <p className="text-xs uppercase tracking-wide">Access</p>
             <p className="mt-3">Guests can browse the public library. Logging in unlocks adding links, editing block metadata, and deleting saved blocks.</p>
-            <p className="mt-4">Credentials are configured by <code>FOLIUM_USERNAME</code> and <code>FOLIUM_PASSWORD</code>.</p>
+            <p className="mt-4">Use your Folium account to manage private links and curation settings.</p>
             <Link href="/" className="mt-5 inline-block underline">Back to library</Link>
           </aside>
         </section>

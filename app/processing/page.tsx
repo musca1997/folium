@@ -33,7 +33,7 @@ export default async function ProcessingPage() {
         <section className="mb-5 border border-line p-4 text-sm text-muted">
           Worker: <span className="text-ink">{heartbeat?.online ? "online" : "offline"}</span>
           {heartbeat ? <span> · pid {heartbeat.pid} · last seen {Math.round(heartbeat.ageMs / 1000)}s ago</span> : null}
-          {!heartbeat?.online ? <p className="mt-2">Queued jobs will not run until you start <code>npm run worker</code> or <code>npm run dev:all</code>.</p> : null}
+          {!heartbeat?.online ? <p className="mt-2">Queued jobs will start once the background worker is running.</p> : null}
         </section>
 
         <section className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">

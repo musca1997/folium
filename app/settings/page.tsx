@@ -14,7 +14,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     <>
       <Header />
       <main className="mx-auto max-w-3xl px-5 py-8">
-        <PageIntro eyebrow="Account" title="Settings" description="Manage login credentials and LLM API settings for this self-hosted Folium instance." />
+        <PageIntro eyebrow="Account" title="Settings" description="Manage your login, AI provider, and library backups." />
         <div className="space-y-8">
           <section className="grid gap-6 md:grid-cols-[minmax(0,1fr)_260px]">
             <form action={updateCredentialsAction} className="space-y-4 border border-line p-5">
@@ -43,9 +43,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             <aside className="border border-line p-5 text-sm leading-relaxed text-muted">
               <p className="text-xs uppercase tracking-wide">Security</p>
               <p className="mt-3">Changing credentials logs you out. Log in again with the new username and password.</p>
-              <p className="mt-4">Credentials are stored locally in <code>data/auth.json</code>.</p>
-              {!security.strongSessionSecret ? <p className="mt-4">Warning: set a strong <code>FOLIUM_SESSION_SECRET</code> before exposing this instance publicly.</p> : null}
-              {security.usingDefaultAuth ? <p className="mt-4">Warning: this instance is still using default auth. Change it before public deployment.</p> : null}
+              <p className="mt-4">Use a strong password, especially if this instance is reachable from the public internet.</p>
+              {!security.strongSessionSecret ? <p className="mt-4">Warning: your session secret is not configured strongly enough for public deployment.</p> : null}
+              {security.usingDefaultAuth ? <p className="mt-4">Warning: this instance is still using default login credentials. Change them before public deployment.</p> : null}
               <form action={logoutAction} className="mt-5">
                 <input type="hidden" name="csrf" value={csrf} />
                 <button type="submit" className="border border-ink px-3 py-1.5 text-ink hover:bg-ink hover:text-white">Logout</button>
@@ -80,7 +80,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               <p className="text-xs uppercase tracking-wide">LLM Wiki</p>
               <p className="mt-3">The saved key is used for summaries, topics, wiki nodes, claims, and evidence extraction.</p>
               <p className="mt-4">Status: {ai.apiKey || process.env.OPENAI_API_KEY ? "API key configured" : "No API key configured"}.</p>
-              <p className="mt-4">Keys are stored locally in <code>data/settings.json</code> and are never displayed back.</p>
+              <p className="mt-4">Saved keys are never displayed back in the interface.</p>
             </aside>
           </section>
 
@@ -109,7 +109,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             </div>
             <aside className="border border-line p-5 text-sm leading-relaxed text-muted">
               <p className="text-xs uppercase tracking-wide">Local snapshots</p>
-              <p className="mt-3">Backups are stored under <code>data/backups</code>. Restoring creates a safety backup of the current library first.</p>
+              <p className="mt-3">Restoring creates a safety backup of the current library first.</p>
               <p className="mt-4">Available backups: {backups.length}</p>
             </aside>
           </section>

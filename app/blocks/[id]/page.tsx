@@ -153,7 +153,7 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
             </div>
             {block.status !== "indexed" && block.status !== "failed" ? (
               <div className="border border-line p-4 text-sm text-muted">
-                {heartbeat?.online ? "The worker is online. This page refreshes while processing." : <>Worker offline. Start it with <code>npm run worker</code> or <code>npm run dev:all</code>.</>}
+                {heartbeat?.online ? "The worker is online. This page refreshes while processing." : "The background worker is offline. Queued processing will resume when it is running."}
               </div>
             ) : null}
             <Link href="/" className="inline-block text-sm underline">
