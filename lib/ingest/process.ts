@@ -162,33 +162,66 @@ async function analyzeWithOpenAI(url: string, context: AnalyzeContext): Promise<
   return parseLlmAnalysis(content);
 }
 
+type DomainTopicRule = {
+  name: string;
+  description: string;
+  pattern: RegExp;
+};
+
+const containerTopics = new Set([
+  "web curation",
+  "personal blogs and web publishing",
+  "visual research",
+  "creative coding",
+  "software development workflows",
+  "online communities",
+]);
+
+const domainTopicRules: DomainTopicRule[] = [
+  { name: "Music and Musicology", description: "Music culture, composition, instruments, sound practices, and computational or historical music research.", pattern: /\b(music|musical|musicology|musicologist|composer|composition|instrument|luthier|guitar|score|scores|sound|sonic|electronic music|k-pop|song|songs)\b/ },
+  { name: "Mathematics", description: "Mathematical ideas, proofs, structures, fields, education, and mathematical culture.", pattern: /\b(mathematics|math|mathematical|algebra|topology|geometry|calculus|probability|statistics|combinatorics|graph theory|number theory|proof|theorem|category theory)\b/ },
+  { name: "Philosophy", description: "Philosophical traditions, arguments, thinkers, metaphysics, ethics, epistemology, and critical theory.", pattern: /\b(philosophy|philosopher|philosophical|metaphysics|epistemology|ethics|ontology|nihilism|posthumanism|accelerationism|phenomenology|critical theory|anti-humanism)\b/ },
+  { name: "Cybersecurity", description: "Security research, hacking practice, vulnerability learning, privacy, and defensive or offensive security tools.", pattern: /\b(cybersecurity|security|hacking|infosec|vulnerability|exploit|ctf|malware|phishing|cryptography|penetration testing|xss|sql injection)\b/ },
+  { name: "Game Development", description: "Game design, game engines, interactive systems, homebrew games, and playable software projects.", pattern: /\b(game development|game design|game engine|games|gameplay|homebrew app|emulator|emulation|rom|nintendo|switch|wii u|unity|godot|unreal)\b/ },
+  { name: "Self-hosting", description: "Personal infrastructure, home servers, deployment, networking, and locally operated software.", pattern: /\b(self-hosting|self hosting|home server|homelab|server|docker|nginx|caddy|tailscale|nas|reverse proxy|systemd|vps)\b/ },
+  { name: "AI and Machine Learning", description: "Artificial intelligence, machine learning systems, language models, agents, datasets, and AI-assisted workflows.", pattern: /\b(ai|artificial intelligence|machine learning|llm|language model|neural network|transformer|agent|agents|rag|embedding|embeddings|dataset|inference)\b/ },
+  { name: "Art and Visual Culture", description: "Art, images, visual research, aesthetics, media artifacts, and visual cultural references.", pattern: /\b(art|artist|visual culture|aesthetic|image|images|photography|film|cinema|video art|painting|gallery|exhibition|design)\b/ },
+  { name: "Archives and Databases", description: "Directories, archives, datasets, catalogs, repositories, and structured collections of reusable references.", pattern: /\b(archive|archives|database|dataset|directory|catalog|repository|collection|index|bibliography|resources|metadata)\b/ },
+  { name: "Education and Learning", description: "Learning resources, tutorials, courses, pedagogy, study notes, and knowledge-building practices.", pattern: /\b(education|learning|tutorial|course|curriculum|study|teaching|pedagogy|textbook|lesson|practice|challenge|knowledge)\b/ },
+];
+
 function hasTopic(analysis: LlmAnalysis, name: string): boolean {
   return analysis.topics.some((topic) => topic.name.toLowerCase() === name.toLowerCase());
 }
 
-function musicSignal(context: AnalyzeContext, analysis: LlmAnalysis): boolean {
-  const haystack = [
+function topicEvidenceText(context: AnalyzeContext, analysis: LlmAnalysis): string {
+  return [
     context.title,
     context.description,
     context.textContent?.slice(0, 4000),
     ...analysis.nodes.map((node) => `${node.name} ${node.description}`),
   ].join(" ").toLowerCase();
-  return /\b(music|musical|musicology|musicologist|composer|composition|instrument|luthier|guitar|score|scores|sound|sonic|electronic music|k-pop|song|songs)\b/.test(haystack);
+}
+
+function isContainerTopic(name: string): boolean {
+  return containerTopics.has(name.toLowerCase());
 }
 
 export function ensureDomainTopicCoverage(url: string, context: AnalyzeContext, analysis: LlmAnalysis): LlmAnalysis {
   const next: LlmAnalysis = { ...analysis, topics: [...analysis.topics] };
-  if (musicSignal(context, next) && !hasTopic(next, "Music and Musicology")) {
-    next.topics = [
-      {
-        name: "Music and Musicology",
-        description: "Music culture, composition, instruments, sound practices, and computational or historical music research.",
-        confidence: 0.82,
-        claims: ["This reference is primarily about music, musical practice, or music research."],
-        evidence: context.title ? [{ quote: context.title.slice(0, 280), source: "title" as const }] : [],
-      },
-      ...next.topics,
-    ].slice(0, 2);
+  const haystack = topicEvidenceText(context, next);
+  const matched = domainTopicRules.find((rule) => rule.pattern.test(haystack));
+  if (matched && !hasTopic(next, matched.name)) {
+    const domainTopic = {
+      name: matched.name,
+      description: matched.description,
+      confidence: 0.82,
+      claims: [`This reference has strong ${matched.name.toLowerCase()} signals in its title, text, or extracted nodes.`],
+      evidence: context.title ? [{ quote: context.title.slice(0, 280), source: "title" as const }] : [],
+    };
+    const nonDuplicate = next.topics.filter((topic) => topic.name.toLowerCase() !== matched.name.toLowerCase());
+    const highValueExisting = nonDuplicate.filter((topic) => !isContainerTopic(topic.name) || topic.confidence >= 0.75);
+    next.topics = [domainTopic, ...highValueExisting].slice(0, 2);
   }
   if (next.topics.length > 0) return next;
   const domain = getDomain(url);

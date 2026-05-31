@@ -35,6 +35,33 @@ describe("ensureDomainTopicCoverage", () => {
     });
 
     expect(result.topics.map((topic) => topic.name)).toContain("Music and Musicology");
+    expect(result.topics[0]?.name).toBe("Music and Musicology");
+  });
+
+  it("promotes mathematics over container topics", () => {
+    const result = ensureDomainTopicCoverage("https://example.com/math", {
+      title: "A reflection on algebra, topology, and mathematical learning",
+      textContent: "linear algebra graph theory abstract algebra topology probability proof theorem mathematics",
+    }, {
+      summary: "A post about mathematical learning.",
+      topics: [{ name: "Personal blogs and web publishing", description: "Personal essays.", confidence: 0.88, claims: [], evidence: [] }],
+      nodes: [{ type: "Concept", name: "Abstract algebra", description: "A field of mathematics.", relevance: 0.9, claims: [], evidence: [] }],
+    });
+
+    expect(result.topics[0]?.name).toBe("Mathematics");
+  });
+
+  it("promotes philosophy over future studies when philosophy evidence is stronger", () => {
+    const result = ensureDomainTopicCoverage("https://example.com/philosophy", {
+      title: "Summary of Nick Land's philosophy",
+      textContent: "philosophy posthumanism accelerationism nihilism metaphysics anti-humanism Nick Land",
+    }, {
+      summary: "A philosophical summary.",
+      topics: [{ name: "Future studies", description: "Speculative futures.", confidence: 0.76, claims: [], evidence: [] }],
+      nodes: [{ type: "Person", name: "Nick Land", description: "Philosopher.", relevance: 0.9, claims: [], evidence: [] }],
+    });
+
+    expect(result.topics[0]?.name).toBe("Philosophy");
   });
 });
 
