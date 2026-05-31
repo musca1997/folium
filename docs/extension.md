@@ -37,7 +37,7 @@ Firefox temporary add-ons are removed when Firefox restarts. For long-term Firef
 ## Configure
 
 1. Open your Folium Settings page.
-2. Generate an Agent API token. Folium currently keeps one active Agent API token; generating a new token replaces the previous token.
+2. Generate an Agent API token with a note such as `Chrome extension` or `Firefox extension`. Tokens are shown once, and you can delete individual tokens later.
 3. Open the Folium extension popup.
 4. Set:
    - Folium URL, for example `https://your-folium.example.com`

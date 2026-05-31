@@ -1,5 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
-import { getSettings, updateApiSettings } from "@/lib/settings";
+import { addApiTokenRecord, getSettings, markApiTokenUsed, removeApiTokenRecord, updateApiSettings } from "@/lib/settings";
 
 export function hashApiToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
@@ -9,19 +9,33 @@ export function createApiToken(): string {
   return `folium_${randomBytes(32).toString("base64url")}`;
 }
 
+function makeTokenId(): string {
+  return `tok_${randomBytes(8).toString("hex")}`;
+}
+
 function safeEqual(a: string, b: string): boolean {
   const left = Buffer.from(a);
   const right = Buffer.from(b);
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
-export async function generateApiToken(): Promise<string> {
-  const token = createApiToken();
-  await updateApiSettings({ tokenHash: hashApiToken(token), updatedAt: new Date().toISOString() });
-  return token;
+function cleanLabel(label?: string): string {
+  const value = label?.replace(/\s+/g, " ").trim();
+  return value ? value.slice(0, 80) : "Agent token";
 }
 
-export async function revokeApiToken(): Promise<void> {
+export async function generateApiToken(label?: string): Promise<{ id: string; token: string }> {
+  const token = createApiToken();
+  const id = makeTokenId();
+  await addApiTokenRecord({ id, label: cleanLabel(label), tokenHash: hashApiToken(token), createdAt: new Date().toISOString() });
+  return { id, token };
+}
+
+export async function revokeApiToken(id?: string): Promise<void> {
+  if (id) {
+    await removeApiTokenRecord(id);
+    return;
+  }
   await updateApiSettings({ tokenHash: null, updatedAt: new Date().toISOString() });
 }
 
@@ -32,9 +46,11 @@ export async function verifyApiRequest(request: Request): Promise<boolean> {
   const token = match[1]?.trim();
   if (!token) return false;
   const settings = await getSettings();
-  const tokenHash = settings.api?.tokenHash;
-  if (!tokenHash) return false;
-  return safeEqual(hashApiToken(token), tokenHash);
+  const tokenHash = hashApiToken(token);
+  const found = (settings.api.tokens ?? []).find((record) => safeEqual(tokenHash, record.tokenHash));
+  if (!found) return false;
+  await markApiTokenUsed(found.id);
+  return true;
 }
 
 export async function requireApiAuth(request: Request): Promise<Response | null> {

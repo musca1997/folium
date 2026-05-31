@@ -220,7 +220,7 @@ Agent API, CLI, and integrations:
 - [x] Add browser extension / web clipper for Chrome/Chromium and Firefox, for saving login-gated and verification-gated pages.
 - [ ] Add automated tests for API routes and CLI commands.
 - [ ] Package the Folium CLI for local install and npm publishing.
-- [ ] Add named API tokens with created-at, last-used-at, and revoke controls.
+- [x] Add named API tokens with created-at, last-used-at, and revoke controls.
 - [ ] Add optional API token scopes for read-only, write, and admin actions.
 - [ ] Add API rate limiting for token-authenticated requests.
 - [ ] Add API reference documentation with curl examples.

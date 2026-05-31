@@ -114,13 +114,13 @@ export async function updateAiSettingsAction(formData: FormData) {
 
 export async function generateApiTokenAction(formData: FormData) {
   await requireAuthAndCsrf(formData, "/login?next=/settings");
-  const token = await generateApiToken();
+  const { token } = await generateApiToken(String(formData.get("label") ?? ""));
   redirect(`/settings?apiToken=${encodeURIComponent(token)}`);
 }
 
 export async function revokeApiTokenAction(formData: FormData) {
   await requireAuthAndCsrf(formData, "/login?next=/settings");
-  await revokeApiToken();
+  await revokeApiToken(String(formData.get("tokenId") ?? ""));
   redirect("/settings?api=revoked");
 }
 
