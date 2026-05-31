@@ -10,8 +10,9 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const { q = "" } = await searchParams;
   const query = q.trim();
   const authed = await isAuthenticated();
-  const [nodes, results] = await Promise.all([
+  const [nodes, topics, results] = await Promise.all([
     authed ? libraryStore.listNodes() : libraryStore.listPublicNodes(),
+    authed ? libraryStore.listTopics() : libraryStore.listPublicTopics(),
     query ? (authed ? libraryStore.search(query) : libraryStore.searchPublic(query)) : Promise.resolve(null),
   ]);
 
@@ -51,7 +52,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
             ) : null}
             <section>
               <h2 className="mb-3 text-xs uppercase tracking-wide text-muted">Matching blocks</h2>
-              <BlockGrid blocks={results.blocks} nodes={nodes} />
+              <BlockGrid blocks={results.blocks} nodes={nodes} topics={topics} />
             </section>
           </>
         ) : null}

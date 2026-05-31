@@ -9,10 +9,11 @@ import { libraryStore } from "@/lib/store/library";
 export default async function TopicPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const authed = await isAuthenticated();
-  const [topic, blocks, nodes, topicNodes] = await Promise.all([
+  const [topic, blocks, nodes, topics, topicNodes] = await Promise.all([
     authed ? libraryStore.getTopic(slug) : libraryStore.getPublicTopic(slug),
     authed ? libraryStore.getBlocksForTopic(slug) : libraryStore.getPublicBlocksForTopic(slug),
     authed ? libraryStore.listNodes() : libraryStore.listPublicNodes(),
+    authed ? libraryStore.listTopics() : libraryStore.listPublicTopics(),
     authed ? libraryStore.getNodesForTopic(slug) : libraryStore.getPublicNodesForTopic(slug),
   ]);
   if (!topic) notFound();
@@ -37,7 +38,7 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
         ) : null}
 
         <h2 className="mb-4 text-sm font-normal uppercase tracking-wide text-muted">Related blocks</h2>
-        <BlockGrid blocks={blocks} nodes={nodes} />
+        <BlockGrid blocks={blocks} nodes={nodes} topics={topics} />
       </main>
     </>
   );

@@ -19,9 +19,10 @@ function pageHref(page: number, visibility: string) {
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ visibility?: string; page?: string }> }) {
   const [{ visibility, page }, authed] = await Promise.all([searchParams, isAuthenticated()]);
   const csrf = authed ? await getCsrfToken() : "";
-  const [blocks, nodes, jobs] = await Promise.all([
+  const [blocks, nodes, topics, jobs] = await Promise.all([
     authed ? libraryStore.listBlocks() : libraryStore.listPublicBlocks(),
     authed ? libraryStore.listNodes() : libraryStore.listPublicNodes(),
+    authed ? libraryStore.listTopics() : libraryStore.listPublicTopics(),
     authed ? libraryStore.listJobs() : Promise.resolve([]),
   ]);
   const visibleBlocks = blocks;
@@ -100,7 +101,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               {authed ? <Link href="/?visibility=private" className={`border px-3 py-1.5 ${activeVisibility === "private" ? "border-ink text-ink" : "border-line text-muted hover:border-ink hover:text-ink"}`}>Private {privateCount}</Link> : null}
             </div>
           </div>
-          <BlockGrid blocks={paginatedBlocks} nodes={nodes} csrf={csrf} authed={authed} />
+          <BlockGrid blocks={paginatedBlocks} nodes={nodes} topics={topics} csrf={csrf} authed={authed} />
           {totalPages > 1 ? (
             <nav className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 text-sm" aria-label="Library pagination">
               <p className="text-muted">

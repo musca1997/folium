@@ -8,10 +8,11 @@ import { libraryStore } from "@/lib/store/library";
 export default async function NodePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const authed = await isAuthenticated();
-  const [node, blocks, nodes] = await Promise.all([
+  const [node, blocks, nodes, topics] = await Promise.all([
     authed ? libraryStore.getNode(slug) : libraryStore.getPublicNode(slug),
     authed ? libraryStore.getBlocksForNode(slug) : libraryStore.getPublicBlocksForNode(slug),
     authed ? libraryStore.listNodes() : libraryStore.listPublicNodes(),
+    authed ? libraryStore.listTopics() : libraryStore.listPublicTopics(),
   ]);
   if (!node) notFound();
 
@@ -21,7 +22,7 @@ export default async function NodePage({ params }: { params: Promise<{ slug: str
       <main className="mx-auto max-w-7xl px-5 py-6">
         <PageIntro eyebrow={`${node.type} node`} title={node.name} description={node.description || "A generated wiki node connected to saved references."} />
         <h2 className="mb-4 text-sm font-normal uppercase tracking-wide text-muted">Related blocks</h2>
-        <BlockGrid blocks={blocks} nodes={nodes} />
+        <BlockGrid blocks={blocks} nodes={nodes} topics={topics} />
       </main>
     </>
   );

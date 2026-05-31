@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { toggleBlockPinAction } from "@/app/actions";
-import type { Block, WikiNode } from "@/lib/store/types";
+import type { Block, Topic, WikiNode } from "@/lib/store/types";
 import { NodeChips } from "./NodeChips";
 
 const statusCopy: Record<Block["status"], string> = {
@@ -21,7 +21,7 @@ function initials(domain: string): string {
   return domain.replace(/^www\./, "").split(".")[0]?.slice(0, 2) || "f";
 }
 
-export function BlockCard({ block, nodes, authed = false, csrf = "" }: { block: Block; nodes: WikiNode[]; authed?: boolean; csrf?: string }) {
+export function BlockCard({ block, nodes, topics = [], authed = false, csrf = "" }: { block: Block; nodes: WikiNode[]; topics?: Topic[]; authed?: boolean; csrf?: string }) {
   const isProcessing = block.status !== "indexed" && block.status !== "failed";
   const image = block.screenshotPath ?? block.previewImage;
 
@@ -60,7 +60,7 @@ export function BlockCard({ block, nodes, authed = false, csrf = "" }: { block: 
         </div>
       </Link>
       <div className="space-y-3 px-3 pb-3">
-        <NodeChips block={block} nodes={nodes} />
+        <NodeChips block={block} nodes={nodes} topics={topics} />
         {authed ? (
           <form action={toggleBlockPinAction}>
             <input type="hidden" name="csrf" value={csrf} />
