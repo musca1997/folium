@@ -53,6 +53,7 @@ export async function POST(request: Request) {
     canonicalUrl: asString(body?.canonicalUrl) || url,
     previewImage: asNullableString(body?.previewImage),
     favicon: asNullableString(body?.favicon),
+    screenshotDataUrl: asString(body?.screenshotDataUrl),
     extractionMethod: "browser_extension",
   });
   const [nodes, topics] = await Promise.all([libraryStore.listNodes(), libraryStore.listTopics()]);

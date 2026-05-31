@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { browserExtractPage } from "@/lib/ingest/browserExtract";
 import { detectVerificationBlock, fetchAndExtractPage } from "@/lib/ingest/extract";
 import { analyzeUrl, getAnalysisProviderName } from "@/lib/ingest/process";
-import { captureScreenshot } from "@/lib/ingest/screenshot";
+import { captureScreenshot, saveScreenshotDataUrl } from "@/lib/ingest/screenshot";
 import { canonicalizeUrl, getDomain, getUrlDuplicateKey, normalizeUrl, slugifyNodeName } from "@/lib/ingest/url";
 import { reconcileNodeName, reconcileTopicName } from "@/lib/taxonomy/reconcile";
 import type { Block, BlockNodeLink, BlockTopicLink, BlockVisibility, CurationState, Job, LibraryData, NodeType, Topic, WikiNode } from "./types";
@@ -19,6 +19,7 @@ type ProvidedContentInput = {
   canonicalUrl?: string;
   previewImage?: string | null;
   favicon?: string | null;
+  screenshotDataUrl?: string;
   extractionMethod: "manual" | "browser_extension";
 };
 
@@ -332,6 +333,7 @@ export function createLibraryStore(options: StoreOptions = {}) {
     async setProvidedContent(id: string, input: ProvidedContentInput): Promise<Block> {
       const text = input.contentText.replace(/\s+/g, " ").trim();
       if (text.length < 20) throw new Error("Provided content is too short");
+      const screenshot = input.screenshotDataUrl ? await saveScreenshotDataUrl(input.screenshotDataUrl, id) : null;
       return updateData((data) => {
         const block = data.blocks.find((item) => item.id === id);
         if (!block) throw new Error(`Block not found: ${id}`);
@@ -342,10 +344,11 @@ export function createLibraryStore(options: StoreOptions = {}) {
         if (cleanDescription !== undefined) block.description = cleanDescription;
         if (input.previewImage !== undefined) block.previewImage = input.previewImage;
         if (input.favicon !== undefined) block.favicon = input.favicon;
+        if (screenshot?.path) block.screenshotPath = screenshot.path;
         block.contentText = text;
         block.contentHtml = input.contentHtml?.trim() ?? "";
         block.status = "thinking";
-        block.metadata = { ...block.metadata, canonicalUrl: input.canonicalUrl?.trim() || block.metadata.canonicalUrl || block.url, extractionMethod: input.extractionMethod, extractionBlockedReason: undefined, extractionError: undefined };
+        block.metadata = { ...block.metadata, canonicalUrl: input.canonicalUrl?.trim() || block.metadata.canonicalUrl || block.url, extractionMethod: input.extractionMethod, extractionBlockedReason: undefined, extractionError: undefined, screenshotError: screenshot?.error ?? undefined };
         block.updatedAt = timestamp;
         const existing = data.jobs.find((job) => job.blockId === id && job.type === "analyze_block" && ["queued", "running"].includes(job.status));
         if (!existing) data.jobs.push({ id: makeId("job"), type: "analyze_block", blockId: id, status: "queued", error: null, attempts: 0, maxAttempts: maxJobAttempts, claimedAt: null, lastError: null, lastErrorAt: null, errorHistory: [], createdAt: timestamp, updatedAt: timestamp });

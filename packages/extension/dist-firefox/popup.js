@@ -73,6 +73,9 @@ function readPage() {
         favicon: absolute(favicon),
     };
 }
+async function captureVisibleScreenshot() {
+    return promisify((callback) => extensionApi.tabs.captureVisibleTab(null, { format: "jpeg", quality: 72 }, callback)).catch(() => "");
+}
 async function clip(useSelection) {
     const config = await getConfig();
     const baseUrl = normalizeBaseUrl(config.url ?? "");
@@ -86,6 +89,7 @@ async function clip(useSelection) {
     const contentText = useSelection && page.selectionText.trim() ? page.selectionText : page.contentText;
     if (contentText.trim().length < 20)
         throw new Error("No readable text found on this page.");
+    const screenshotDataUrl = await captureVisibleScreenshot();
     const response = await fetch(`${baseUrl}/api/clip`, {
         method: "POST",
         headers: {
@@ -101,6 +105,7 @@ async function clip(useSelection) {
             htmlContent: useSelection ? "" : page.htmlContent,
             previewImage: page.previewImage,
             favicon: page.favicon,
+            screenshotDataUrl,
             visibility: visibilityInput.value === "public" ? "public" : "private",
             source: "browser_extension",
         }),

@@ -48,8 +48,8 @@ Firefox temporary add-ons are removed when Firefox restarts. For long-term Firef
 
 Open a page in your browser, click the Folium extension, then choose:
 
-- **Save page** — sends page title, URL, metadata, visible text, and HTML.
-- **Save selection** — sends only selected text as the readable content.
+- **Save page** — sends page title, URL, metadata, visible text, HTML, and a visible-tab screenshot.
+- **Save selection** — sends selected text as the readable content, plus a visible-tab screenshot.
 
 New clips default to private unless you choose public in the popup.
 
@@ -61,11 +61,11 @@ The extension reads the current tab only when you click the extension action. It
 POST /api/clip
 ```
 
-Folium then creates or updates the matching block, stores the provided browser content, and queues AI analysis. The worker does not need to fetch the page again.
+Folium then creates or updates the matching block, stores the provided browser content and screenshot, and queues AI analysis. The worker does not need to fetch the page again.
 
 ## Security notes
 
-- The extension sends page text from your current browser tab to your configured Folium instance.
+- The extension sends page text and a visible-tab screenshot from your current browser tab to your configured Folium instance.
 - Keep the Agent API token private.
 - Revoke the token in Folium Settings if it may have been exposed.
 - Use private visibility unless you explicitly want the block to be guest-visible.

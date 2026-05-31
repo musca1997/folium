@@ -3,7 +3,7 @@
   "name": "Folium Web Clipper",
   "version": "0.1.0",
   "description": "Save the current page or selected text to your Folium library.",
-  "permissions": ["activeTab", "scripting", "storage"],
+  "permissions": ["activeTab", "scripting", "storage", "tabs"],
   "host_permissions": ["http://*/*", "https://*/*"],
   "browser_specific_settings": {
     "gecko": {

@@ -9,6 +9,7 @@ type ExtensionApi = {
   };
   tabs: {
     query(queryInfo: { active: boolean; currentWindow: boolean }, callback?: (tabs: ExtensionTab[]) => void): Promise<ExtensionTab[]> | void;
+    captureVisibleTab(windowId?: number | null, options?: { format?: "jpeg" | "png"; quality?: number }, callback?: (dataUrl: string) => void): Promise<string> | void;
   };
   scripting: {
     executeScript<T>(options: { target: { tabId: number }; func: () => T }, callback?: (results: Array<{ result?: T }>) => void): Promise<Array<{ result?: T }>> | void;
