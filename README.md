@@ -206,8 +206,8 @@ Reliability and deployment:
 
 Data quality and curation:
 
-- [ ] Add duplicate URL detection and canonical URL matching before creating new blocks.
-- [ ] Add URL canonicalization rules for tracking parameters, canonical links, and normalized domains.
+- [x] Add duplicate URL detection and canonical URL matching before creating new blocks.
+- [x] Add URL canonicalization rules for tracking parameters, canonical links, and normalized domains.
 - [ ] Add duplicate merge tools for equivalent blocks.
 - [ ] Store per-block extraction events for fetch, browser fallback, screenshot, and AI analysis.
 - [ ] Show provider/model, retry history, and compact processing logs on authenticated block pages.

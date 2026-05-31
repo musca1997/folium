@@ -206,8 +206,8 @@ Folium 使用 Apache License, Version 2.0 授权。详情见 [LICENSE](./LICENSE
 
 数据质量与策展：
 
-- [ ] 创建 blocks 前添加重复 URL 检测和 canonical URL 匹配。
-- [ ] 添加 URL canonicalization 规则，用于处理 tracking parameters、canonical links 和规范化 domains。
+- [x] 创建 blocks 前添加重复 URL 检测和 canonical URL 匹配。
+- [x] 添加 URL canonicalization 规则，用于处理 tracking parameters、canonical links 和规范化 domains。
 - [ ] 添加等价 blocks 的重复合并工具。
 - [ ] 为每个 block 存储 fetch、browser fallback、screenshot 和 AI analysis 的 extraction events。
 - [ ] 在登录态 block 页面展示 provider/model、retry history 和紧凑 processing logs。

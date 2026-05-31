@@ -101,7 +101,7 @@ async function runMcpServer() {
           else if (name === "folium_search") data = await request(`/api/search?q=${encodeURIComponent(String(input.query ?? ""))}`);
           else if (name === "folium_add") {
             const added = await request("/api/blocks", { method: "POST", body: JSON.stringify({ url: input.url, visibility: input.visibility === "public" ? "public" : "private" }) });
-            data = input.wait ? await waitForBlock(added.block.id) : added;
+            data = input.wait && added.created ? { ...(await waitForBlock(added.block.id)), created: added.created, duplicate: added.duplicate } : added;
           } else if (name === "folium_get") data = await request(`/api/blocks/${encodeURIComponent(String(input.id))}`);
           else if (name === "folium_extract") data = await request("/api/extract", { method: "POST", body: JSON.stringify({ url: input.url, browser: Boolean(input.browser) }) });
           else throw new Error(`Unknown tool: ${name}`);
@@ -144,8 +144,11 @@ async function main() {
     if (!url) throw new Error("Missing URL");
     const visibility = opts.public ? "public" : "private";
     const data = await request("/api/blocks", { method: "POST", body: JSON.stringify({ url, visibility }) });
-    const result = opts.wait ? await waitForBlock(data.block.id) : data;
-    print(result, opts);
+    const result = opts.wait && data.created ? { ...(await waitForBlock(data.block.id)), created: data.created, duplicate: data.duplicate } : data;
+    if (!opts.json && !opts.text) {
+      const block = result.block ?? data.block;
+      print(`${result.duplicate ? "Already saved" : "Added"}: ${block.title || block.url} (${block.id})`, opts);
+    } else print(result, opts);
     return;
   }
 

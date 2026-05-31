@@ -5,11 +5,12 @@ import { browserExtractPage } from "@/lib/ingest/browserExtract";
 import { fetchAndExtractPage } from "@/lib/ingest/extract";
 import { analyzeUrl, getAnalysisProviderName } from "@/lib/ingest/process";
 import { captureScreenshot } from "@/lib/ingest/screenshot";
-import { getDomain, normalizeUrl, slugifyNodeName } from "@/lib/ingest/url";
+import { canonicalizeUrl, getDomain, getUrlDuplicateKey, normalizeUrl, slugifyNodeName } from "@/lib/ingest/url";
 import { reconcileNodeName, reconcileTopicName } from "@/lib/taxonomy/reconcile";
 import type { Block, BlockNodeLink, BlockTopicLink, BlockVisibility, CurationState, Job, LibraryData, NodeType, Topic, WikiNode } from "./types";
 
 type StoreOptions = { dataDir?: string; enableNetwork?: boolean; staleJobTimeoutMs?: number; maxJobAttempts?: number };
+type AddUrlBlockResult = { block: Block; created: boolean; duplicate: boolean };
 
 const defaultData: LibraryData = { blocks: [], nodes: [], topics: [], jobs: [] };
 const DEFAULT_STALE_JOB_TIMEOUT_MS = 15 * 60_000;
@@ -179,15 +180,29 @@ export function createLibraryStore(options: StoreOptions = {}) {
   }
 
   return {
-    async createUrlBlock(inputUrl: string, visibility: BlockVisibility = "private"): Promise<Block> {
-      const url = normalizeUrl(inputUrl);
+    async addUrlBlock(inputUrl: string, visibility: BlockVisibility = "private"): Promise<AddUrlBlockResult> {
+      const url = canonicalizeUrl(inputUrl);
+      const duplicateKey = getUrlDuplicateKey(url);
       const timestamp = nowIso();
-      const block: Block = {
-        id: makeId("blk"), type: "url", url, domain: getDomain(url), title: getDomain(url), summary: "",
-        contentText: "", contentHtml: "", status: "pending", screenshotPath: null, previewImage: null, favicon: null,
-        description: "", metadata: {}, visibility, nodeLinks: [], topicLinks: [], createdAt: timestamp, updatedAt: timestamp, curation: defaultCuration(),
-      };
-      await updateData((data) => { data.blocks.unshift(block); }); return block;
+      return updateData((data) => {
+        const existing = data.blocks.find((block) => {
+          const candidates = [block.url, typeof block.metadata?.canonicalUrl === "string" ? block.metadata.canonicalUrl : null].filter(Boolean) as string[];
+          return candidates.some((candidate) => {
+            try { return getUrlDuplicateKey(candidate) === duplicateKey; } catch { return false; }
+          });
+        });
+        if (existing) return { block: existing, created: false, duplicate: true };
+        const block: Block = {
+          id: makeId("blk"), type: "url", url, domain: getDomain(url), title: getDomain(url), summary: "",
+          contentText: "", contentHtml: "", status: "pending", screenshotPath: null, previewImage: null, favicon: null,
+          description: "", metadata: { canonicalUrl: url, duplicateKey }, visibility, nodeLinks: [], topicLinks: [], createdAt: timestamp, updatedAt: timestamp, curation: defaultCuration(),
+        };
+        data.blocks.unshift(block); return { block, created: true, duplicate: false };
+      });
+    },
+
+    async createUrlBlock(inputUrl: string, visibility: BlockVisibility = "private"): Promise<Block> {
+      return (await this.addUrlBlock(inputUrl, visibility)).block;
     },
 
     async listBlocks(): Promise<Block[]> { return visible((await readData()).blocks); },

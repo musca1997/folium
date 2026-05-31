@@ -14,8 +14,8 @@ export async function POST(request: Request) {
     return Response.json({ error: "unsafe_url", message: error instanceof Error ? error.message : "URL rejected" }, { status: 400 });
   }
   const visibility = body?.visibility === "public" ? "public" : "private";
-  const block = await libraryStore.createUrlBlock(url, visibility);
-  await libraryStore.enqueueProcessBlock(block.id);
+  const result = await libraryStore.addUrlBlock(url, visibility);
+  if (result.created) await libraryStore.enqueueProcessBlock(result.block.id);
   const [nodes, topics] = await Promise.all([libraryStore.listNodes(), libraryStore.listTopics()]);
-  return Response.json({ block: serializeBlock(block, nodes, topics) }, { status: 201 });
+  return Response.json({ block: serializeBlock(result.block, nodes, topics), created: result.created, duplicate: result.duplicate }, { status: result.created ? 201 : 200 });
 }

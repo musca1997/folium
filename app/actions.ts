@@ -30,9 +30,9 @@ export async function addUrlAction(formData: FormData) {
   }
 
   const visibility = formData.get("visibility") === "public" ? "public" : "private";
-  const block = await libraryStore.createUrlBlock(safeUrl, visibility);
-  await libraryStore.enqueueProcessBlock(block.id);
-  redirect(`/blocks/${block.id}`);
+  const result = await libraryStore.addUrlBlock(safeUrl, visibility);
+  if (result.created) await libraryStore.enqueueProcessBlock(result.block.id);
+  redirect(`/blocks/${result.block.id}${result.duplicate ? "?duplicate=1" : ""}`);
 }
 
 export async function updateBlockAction(formData: FormData) {

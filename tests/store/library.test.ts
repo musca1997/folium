@@ -66,4 +66,26 @@ describe("library store", () => {
 
     await expect(store.listBlocks()).rejects.toThrow();
   });
+
+  it("returns the existing block when adding a duplicate canonical URL", async () => {
+    const store = createLibraryStore({ dataDir: dir, enableNetwork: false });
+
+    const first = await store.addUrlBlock("https://www.example.com/a?utm_source=newsletter");
+    const second = await store.addUrlBlock("https://example.com/a");
+
+    expect(first.created).toBe(true);
+    expect(second.created).toBe(false);
+    expect(second.duplicate).toBe(true);
+    expect(second.block.id).toBe(first.block.id);
+    expect(await store.listBlocks()).toHaveLength(1);
+  });
+
+  it("deduplicates concurrent equivalent URL adds", async () => {
+    const store = createLibraryStore({ dataDir: dir, enableNetwork: false });
+
+    const results = await Promise.all(Array.from({ length: 20 }, () => store.addUrlBlock("https://example.com/a?utm_source=x")));
+
+    expect(await store.listBlocks()).toHaveLength(1);
+    expect(results.filter((result) => result.created)).toHaveLength(1);
+  });
 });
