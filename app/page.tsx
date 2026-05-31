@@ -45,7 +45,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         <section className="mb-8 border-b border-line pb-8">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
             <div>
-              <p className="mb-3 text-xs uppercase tracking-[0.24em] text-muted">Self-hosted visual wiki</p>
+              <p className="mb-3 text-xs uppercase tracking-[0.24em] text-muted">Save, connect, revisit</p>
               <h1 className="max-w-4xl text-4xl font-normal leading-tight tracking-tight md:text-6xl">Folium</h1>
               <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink">
                 A self-hosted, LLM-assisted link curator that turns saved pages into a living wiki.
