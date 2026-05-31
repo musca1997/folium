@@ -31,11 +31,11 @@ export function BlockCard({ block, nodes, authed = false, csrf = "" }: { block: 
         <div className={`relative flex ${previewRatio(block)} items-center justify-center overflow-hidden border-b border-line bg-soft text-center text-xs text-muted`}>
           {image ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={image} alt="" className="h-full w-full object-cover grayscale transition duration-300 group-hover:grayscale-0" />
+            <img src={image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover grayscale transition duration-300 group-hover:grayscale-0" />
           ) : block.favicon ? (
             <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-white">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={block.favicon} alt="" className="h-10 w-10 object-contain grayscale" />
+              <img src={block.favicon} alt="" loading="lazy" decoding="async" className="h-10 w-10 object-contain grayscale" />
               <p className="max-w-[70%] break-words text-xs text-muted">{block.domain}</p>
             </div>
           ) : (

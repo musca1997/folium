@@ -10,15 +10,24 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (!block) notFound();
   if (block.visibility !== "public" && !(await isAuthenticated())) notFound();
 
-  try {
-    const bytes = await readFile(join(process.cwd(), "data", "screenshots", `${id}.png`));
-    return new Response(bytes, {
-      headers: {
-        "content-type": "image/png",
-        "cache-control": "private, max-age=3600",
-      },
-    });
-  } catch {
-    notFound();
+  const candidates = [
+    { path: join(process.cwd(), "data", "screenshots", `${id}.webp`), contentType: "image/webp" },
+    { path: join(process.cwd(), "data", "screenshots", `${id}.png`), contentType: "image/png" },
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      const bytes = await readFile(candidate.path);
+      return new Response(bytes, {
+        headers: {
+          "content-type": candidate.contentType,
+          "cache-control": block.visibility === "public" ? "public, max-age=31536000, immutable" : "private, max-age=86400",
+        },
+      });
+    } catch {
+      // Try the next format for legacy screenshots.
+    }
   }
+
+  notFound();
 }

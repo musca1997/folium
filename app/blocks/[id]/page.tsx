@@ -36,7 +36,7 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
             <div className="flex aspect-video items-center justify-center overflow-hidden border border-line bg-soft text-sm text-muted">
               {block.screenshotPath || block.previewImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={block.screenshotPath ?? block.previewImage ?? ""} alt="" className="h-full w-full object-cover grayscale" />
+                <img src={block.screenshotPath ?? block.previewImage ?? ""} alt="" loading="eager" decoding="async" className="h-full w-full object-cover grayscale" />
               ) : (
                 "Screenshot placeholder"
               )}
