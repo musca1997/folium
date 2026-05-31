@@ -142,4 +142,17 @@ describe("analyzeUrl", () => {
     expect(result.summary).toBe("Fallback description");
     expect(result.nodes.length).toBeGreaterThan(0);
   });
+
+  it("still applies domain coverage when provider request falls back", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "test-key");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("nope", { status: 500 })));
+
+    const result = await analyzeUrl("https://meshcn.net", {
+      title: "MeshCN - Meshtastic 中国社区",
+      description: "LoRa mesh networking and Meshtastic off-grid communication.",
+      textContent: "Meshtastic LoRa mesh networking off-grid emergency communication solar nodes",
+    });
+
+    expect(result.topics[0]?.name).toBe("Wireless Communication");
+  });
 });

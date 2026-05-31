@@ -250,12 +250,12 @@ export function ensureDomainTopicCoverage(url: string, context: AnalyzeContext, 
 
 export async function analyzeUrl(url: string, context: AnalyzeContext = {}): Promise<LlmAnalysis> {
   const settings = await getAiSettings();
-  if (!settings.apiKey && !process.env.OPENAI_API_KEY) return fallbackAnalysisForUrl(url, context);
+  if (!settings.apiKey && !process.env.OPENAI_API_KEY) return ensureDomainTopicCoverage(url, context, fallbackAnalysisForUrl(url, context));
 
   try {
     return ensureDomainTopicCoverage(url, context, await analyzeWithOpenAI(url, context));
   } catch {
-    return fallbackAnalysisForUrl(url, context);
+    return ensureDomainTopicCoverage(url, context, fallbackAnalysisForUrl(url, context));
   }
 }
 
