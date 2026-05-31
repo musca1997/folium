@@ -71,21 +71,24 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             </div>
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-2 text-sm">
-            <Link href="/add" className="border border-ink px-3 py-2 hover:bg-ink hover:text-white">
-              Save a link
-            </Link>
-            <Link href="/search" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">
-              Search library
-            </Link>
-            <Link href="/graph" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">
-              View graph
-            </Link>
-            {processingCount > 0 ? (
-              <Link href="/processing" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">
-                {processingCount} processing
+          <div className="mt-8 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <form className="flex gap-2" action="/search">
+              <input name="q" placeholder="Search saved pages, summaries, topics, nodes..." className="min-w-0 flex-1 border border-line px-3 py-2 text-sm outline-none focus:border-ink" />
+              <button className="border border-ink px-4 py-2 text-sm hover:bg-ink hover:text-white">Search</button>
+            </form>
+            <div className="flex flex-wrap gap-2 text-sm">
+              <Link href="/add" className="border border-ink px-3 py-2 hover:bg-ink hover:text-white">
+                Save a link
               </Link>
-            ) : null}
+              <Link href="/graph" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">
+                View graph
+              </Link>
+              {processingCount > 0 ? (
+                <Link href="/processing" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">
+                  {processingCount} processing
+                </Link>
+              ) : null}
+            </div>
           </div>
         </section>
 

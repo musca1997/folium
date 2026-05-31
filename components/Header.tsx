@@ -9,7 +9,7 @@ export async function Header() {
       <nav className="mx-auto flex max-w-7xl items-center justify-end text-sm">
         <div className="flex items-center gap-5 text-muted">
           <Link href="/" className="font-semibold text-ink">Library</Link>
-          <Link href="/search">Search</Link>
+          <Link href="/about">About</Link>
           <Link href="/topics">Topics</Link>
           <Link href="/nodes">Nodes</Link>
           <Link href="/graph">Graph</Link>
