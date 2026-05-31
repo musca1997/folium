@@ -20,9 +20,9 @@ export default async function NodesPage({ searchParams }: { searchParams: Promis
       <Header />
       <main className="mx-auto max-w-7xl px-5 py-6">
         <PageIntro
-          eyebrow="LLM wiki"
-          title="Nodes"
-          description="Search and browse the lightweight wiki graph growing behind the library."
+          eyebrow="Find and connect"
+          title="Search"
+          description="Search saved pages, summaries, topics, and wiki nodes, then browse the concepts growing behind the library."
         />
         <section className="mb-8 max-w-3xl">
           <NodeSearchForm initialQuery={query} />
