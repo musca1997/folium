@@ -122,7 +122,9 @@ async function clip(useSelection) {
         const body = await response.json().catch(() => null);
         if (!response.ok)
             throw new Error(body?.error ?? `Folium returned ${response.status}`);
-        setStatus(`${body?.duplicate ? "Updated existing" : "Saved"}: ${body?.block?.title ?? body?.block?.id ?? "block"}. Analysis queued.`);
+        const visibility = body?.block?.visibility ? ` (${body.block.visibility})` : "";
+        const location = body?.block?.id ? `${baseUrl}/blocks/${body.block.id}` : baseUrl;
+        setStatus(`${body?.duplicate ? "Updated existing" : "Saved"}${visibility}: ${body?.block?.title ?? body?.block?.id ?? "block"}. ${location}`);
     }
     finally {
         savePageButton.disabled = false;

@@ -80,17 +80,20 @@ describe("library store", () => {
     expect(after).toEqual([third.id, second.id, first.id]);
   });
 
-  it("returns the existing block when adding a duplicate canonical URL", async () => {
+  it("returns the existing block when adding a duplicate canonical URL and moves it to the front", async () => {
     const store = createLibraryStore({ dataDir: dir, enableNetwork: false });
 
     const first = await store.addUrlBlock("https://www.example.com/a?utm_source=newsletter");
+    const other = await store.addUrlBlock("https://example.com/b");
     const second = await store.addUrlBlock("https://example.com/a");
+    const blocks = await store.listBlocks();
 
     expect(first.created).toBe(true);
     expect(second.created).toBe(false);
     expect(second.duplicate).toBe(true);
     expect(second.block.id).toBe(first.block.id);
-    expect(await store.listBlocks()).toHaveLength(1);
+    expect(blocks).toHaveLength(2);
+    expect(blocks.map((block) => block.id)).toEqual([first.block.id, other.block.id]);
   });
 
   it("deduplicates concurrent equivalent URL adds", async () => {

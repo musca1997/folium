@@ -196,13 +196,18 @@ export function createLibraryStore(options: StoreOptions = {}) {
       const duplicateKey = getUrlDuplicateKey(url);
       const timestamp = nowIso();
       return updateData((data) => {
-        const existing = data.blocks.find((block) => {
+        const existingIndex = data.blocks.findIndex((block) => {
           const candidates = [block.url, typeof block.metadata?.canonicalUrl === "string" ? block.metadata.canonicalUrl : null].filter(Boolean) as string[];
           return candidates.some((candidate) => {
             try { return getUrlDuplicateKey(candidate) === duplicateKey; } catch { return false; }
           });
         });
-        if (existing) return { block: existing, created: false, duplicate: true };
+        if (existingIndex !== -1) {
+          const [existing] = data.blocks.splice(existingIndex, 1);
+          existing.updatedAt = timestamp;
+          data.blocks.unshift(existing);
+          return { block: existing, created: false, duplicate: true };
+        }
         const block: Block = {
           id: makeId("blk"), type: "url", url, domain: getDomain(url), title: getDomain(url), summary: "",
           contentText: "", contentHtml: "", status: "pending", screenshotPath: null, previewImage: null, favicon: null,
