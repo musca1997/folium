@@ -61,6 +61,10 @@ npm run cli -- search "vector search" --json
 ```bash
 npm run cli -- get blk_xxx --json
 npm run cli -- get blk_xxx --text
+npm run cli -- pin blk_xxx --json
+npm run cli -- public blk_xxx --json
+npm run cli -- extract https://example.com --json
+npm run cli -- mcp
 ```
 
 ## Agent usage
@@ -74,8 +78,40 @@ npm run cli -- search "topic or URL" --json
 npm run cli -- add "https://example.com" --private --wait --json
 ```
 
+### Pin / unpin
+
+```bash
+npm run cli -- pin blk_xxx --json
+npm run cli -- unpin blk_xxx --json
+```
+
+### Visibility
+
+```bash
+npm run cli -- public blk_xxx --json
+npm run cli -- private blk_xxx --json
+```
+
+Only make blocks public when they are intended to be shared.
+
+### Extract without saving
+
+```bash
+npm run cli -- extract https://example.com --json
+npm run cli -- extract https://example.com --text
+npm run cli -- extract https://example.com --browser --json
+```
+
+### MCP server
+
+```bash
+npm run cli -- mcp
+```
+
+The MCP server is an early stdio implementation exposing tools for status, search, add, get, and extract.
+
 ## Current limitations
 
 - This is an MVP CLI under `packages/cli`.
-- Pin/public/private mutation commands are planned but not implemented yet.
-- Extract-without-saving and MCP support are planned but not implemented yet.
+- MCP support is experimental.
+- The CLI is not published to npm yet.

@@ -187,8 +187,9 @@ Near-term:
 - [x] Add `docs/cli.md` with human-facing CLI setup and command examples.
 - [x] Add `skills/folium/SKILL.md` with agent-facing instructions for save/search/get workflows.
 - [x] Add project-level `AGENTS.md` for coding agents contributing to Folium.
-- [ ] Add extract-without-saving API and CLI command.
-- [ ] Explore MCP server support for Claude Code, Codex, OpenClaw, Pi, and other agent tools.
+- [x] Add extract-without-saving API and CLI command.
+- [x] Add CLI pin/unpin and public/private curation commands.
+- [x] Explore MCP server support for Claude Code, Codex, OpenClaw, Pi, and other agent tools.
 - [ ] Add a Library list view alongside the visual grid for denser browsing.
 - [ ] More detailed worker health checks and stuck-job recovery.
 - [ ] More transparent extraction logs and retry diagnostics per block.

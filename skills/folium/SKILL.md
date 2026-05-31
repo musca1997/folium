@@ -15,6 +15,8 @@ Use this skill when the user asks to:
 - check whether a URL or topic already exists in their saved library;
 - search previous saved references;
 - retrieve a saved block's summary, extracted text, topics, nodes, or source URL;
+- pin/unpin or make a block public/private;
+- extract a URL without saving it;
 - inspect processing status after saving a link.
 
 Do not save content automatically unless the user asked to save, remember, archive, or collect it.
@@ -53,6 +55,13 @@ folium search "query" --json
 folium add "https://example.com" --private --wait --json
 folium get "blk_xxx" --json
 folium get "blk_xxx" --text
+folium pin "blk_xxx" --json
+folium unpin "blk_xxx" --json
+folium public "blk_xxx" --json
+folium private "blk_xxx" --json
+folium extract "https://example.com" --json
+folium extract "https://example.com" --text
+folium mcp
 ```
 
 ## Error handling
@@ -60,3 +69,4 @@ folium get "blk_xxx" --text
 - `401` or `403`: API token may be missing, invalid, or revoked.
 - Server unreachable: ask the user to check their Folium URL or service.
 - Unsafe URL: Folium blocks localhost/private network URLs for SSRF protection.
+- `folium mcp` is experimental; use direct CLI commands when debugging.

@@ -17,7 +17,7 @@ async function writeConfig(config) {
 }
 function parseArgs(argv) {
     const [command, ...rest] = argv;
-    const opts = { json: false, wait: false, public: false, private: false, text: false };
+    const opts = { json: false, wait: false, public: false, private: false, text: false, browser: false };
     const args = [];
     for (let i = 0; i < rest.length; i++) {
         const item = rest[i];
@@ -31,6 +31,8 @@ function parseArgs(argv) {
             opts.private = true;
         else if (item === "--text")
             opts.text = true;
+        else if (item === "--browser")
+            opts.browser = true;
         else
             args.push(item);
     }
@@ -73,10 +75,76 @@ async function waitForBlock(id, timeoutMs = 120_000) {
     }
     return request(`/api/blocks/${encodeURIComponent(id)}`);
 }
+async function runMcpServer() {
+    process.stdin.setEncoding("utf8");
+    let buffer = "";
+    process.stdin.on("data", async (chunk) => {
+        buffer += chunk;
+        let index;
+        while ((index = buffer.indexOf("\n")) >= 0) {
+            const line = buffer.slice(0, index).trim();
+            buffer = buffer.slice(index + 1);
+            if (!line)
+                continue;
+            let message;
+            try {
+                message = JSON.parse(line);
+            }
+            catch {
+                continue;
+            }
+            const id = message.id;
+            try {
+                let result;
+                if (message.method === "initialize") {
+                    result = { protocolVersion: "2024-11-05", serverInfo: { name: "folium", version: "0.1.0" }, capabilities: { tools: {} } };
+                }
+                else if (message.method === "tools/list") {
+                    result = { tools: [
+                            { name: "folium_status", description: "Get Folium worker and job status", inputSchema: { type: "object", properties: {} } },
+                            { name: "folium_search", description: "Search saved Folium references", inputSchema: { type: "object", properties: { query: { type: "string" } }, required: ["query"] } },
+                            { name: "folium_add", description: "Save a URL to Folium", inputSchema: { type: "object", properties: { url: { type: "string" }, visibility: { type: "string", enum: ["private", "public"] }, wait: { type: "boolean" } }, required: ["url"] } },
+                            { name: "folium_get", description: "Get a Folium block", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
+                            { name: "folium_extract", description: "Extract a URL without saving it", inputSchema: { type: "object", properties: { url: { type: "string" }, browser: { type: "boolean" } }, required: ["url"] } }
+                        ] };
+                }
+                else if (message.method === "tools/call") {
+                    const name = message.params?.name;
+                    const input = message.params?.arguments ?? {};
+                    let data;
+                    if (name === "folium_status")
+                        data = await request("/api/status");
+                    else if (name === "folium_search")
+                        data = await request(`/api/search?q=${encodeURIComponent(String(input.query ?? ""))}`);
+                    else if (name === "folium_add") {
+                        const added = await request("/api/blocks", { method: "POST", body: JSON.stringify({ url: input.url, visibility: input.visibility === "public" ? "public" : "private" }) });
+                        data = input.wait ? await waitForBlock(added.block.id) : added;
+                    }
+                    else if (name === "folium_get")
+                        data = await request(`/api/blocks/${encodeURIComponent(String(input.id))}`);
+                    else if (name === "folium_extract")
+                        data = await request("/api/extract", { method: "POST", body: JSON.stringify({ url: input.url, browser: Boolean(input.browser) }) });
+                    else
+                        throw new Error(`Unknown tool: ${name}`);
+                    result = { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+                }
+                else {
+                    result = {};
+                }
+                if (id !== undefined)
+                    process.stdout.write(`${JSON.stringify({ jsonrpc: "2.0", id, result })}\n`);
+            }
+            catch (error) {
+                if (id !== undefined)
+                    process.stdout.write(`${JSON.stringify({ jsonrpc: "2.0", id, error: { code: -32000, message: error instanceof Error ? error.message : String(error) } })}\n`);
+            }
+        }
+    });
+}
 async function main() {
     const { command, args, opts } = parseArgs(process.argv.slice(2));
     if (!command || command === "help" || command === "--help") {
-        console.log(`folium <command>\n\nCommands:\n  config show|set-url|set-token\n  status [--json]\n  add <url> [--private|--public] [--wait] [--json]\n  search <query> [--json]\n  get <block-id> [--json|--text]`);
+        console.log(`folium <command>\n\nCommands:\n  config show|set-url|set-token\n  status [--json]\n  add <url> [--private|--public] [--wait] [--json]\n  search <query> [--json]\n  get <block-id> [--json|--text]\n  pin|unpin <block-id> [--json]\n  public|private <block-id> [--json]\n  extract <url> [--browser] [--json|--text]\n  mcp`);
         return;
     }
     if (command === "config") {
@@ -127,6 +195,32 @@ async function main() {
             throw new Error("Missing block id");
         const data = await request(`/api/blocks/${encodeURIComponent(id)}`);
         print(opts.text ? data.block.contentText || data.block.summary || data.block.description || "" : data, opts);
+        return;
+    }
+    if (command === "pin" || command === "unpin") {
+        const id = args[0];
+        if (!id)
+            throw new Error("Missing block id");
+        print(await request(`/api/blocks/${encodeURIComponent(id)}/pin`, { method: "POST", body: JSON.stringify({ pinned: command === "pin" }) }), opts);
+        return;
+    }
+    if (command === "public" || command === "private") {
+        const id = args[0];
+        if (!id)
+            throw new Error("Missing block id");
+        print(await request(`/api/blocks/${encodeURIComponent(id)}/visibility`, { method: "POST", body: JSON.stringify({ visibility: command }) }), opts);
+        return;
+    }
+    if (command === "extract") {
+        const url = args[0];
+        if (!url)
+            throw new Error("Missing URL");
+        const data = await request("/api/extract", { method: "POST", body: JSON.stringify({ url, browser: opts.browser }) });
+        print(opts.text ? data.extraction?.textContent || "" : data, opts);
+        return;
+    }
+    if (command === "mcp") {
+        await runMcpServer();
         return;
     }
     throw new Error(`Unknown command: ${command}`);
