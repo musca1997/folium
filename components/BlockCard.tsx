@@ -23,7 +23,7 @@ export function BlockCard({ block, nodes, topics = [], authed = false, csrf = ""
   return (
     <article className="group flex h-full flex-col border border-line bg-white transition-colors hover:bg-[#fbfbfb]">
       <Link href={`/blocks/${block.id}`} className="block flex-1">
-        <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden border-b border-line bg-soft text-center text-xs text-muted">
+        <div className="relative flex aspect-square items-center justify-center overflow-hidden border-b border-line bg-soft text-center text-xs text-muted">
           {image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover grayscale transition duration-300 group-hover:grayscale-0" />
