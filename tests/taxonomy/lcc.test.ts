@@ -25,6 +25,7 @@ describe("LCC canonical topic registry", () => {
 
     expect(result?.topic.name).toBe("Science");
     expect(result?.rule.subclassHint).toBe("QA");
+    expect(result?.rule.nodeHints?.map((hint) => hint.name)).toContain("AI and Machine Learning");
   });
 
   it("classifies LoRa and embedded electronics as Technology", () => {
@@ -35,5 +36,6 @@ describe("LCC canonical topic registry", () => {
 
     expect(result?.topic.name).toBe("Technology");
     expect(result?.rule.subclassHint).toBe("TK");
+    expect(result?.rule.nodeHints?.map((hint) => hint.name)).toContain("Wireless Communication");
   });
 });

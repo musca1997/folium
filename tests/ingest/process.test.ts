@@ -78,6 +78,7 @@ describe("ensureDomainTopicCoverage", () => {
 
     expect(result.topics.map((topic) => topic.name)).not.toContain("Music");
     expect(result.topics[0]?.name).toBe("Science");
+    expect(result.nodes.map((node) => node.name)).toContain("AI and Machine Learning");
   });
 
   it("promotes science for language model courses", () => {
@@ -92,6 +93,7 @@ describe("ensureDomainTopicCoverage", () => {
     });
 
     expect(result.topics[0]?.name).toBe("Science");
+    expect(result.nodes.map((node) => node.name)).toContain("AI and Machine Learning");
   });
 
   it("promotes wireless communication for LoRa mesh communities", () => {
@@ -112,6 +114,7 @@ describe("ensureDomainTopicCoverage", () => {
     });
 
     expect(result.topics[0]?.name).toBe("Technology");
+    expect(result.nodes.map((node) => node.name)).toContain("Wireless Communication");
   });
 
   it("promotes hardware and electronics for embedded device projects", () => {
@@ -125,6 +128,7 @@ describe("ensureDomainTopicCoverage", () => {
     });
 
     expect(result.topics[0]?.name).toBe("Technology");
+    expect(result.nodes.map((node) => node.name)).toContain("Hardware and Electronics");
   });
 });
 

@@ -1,6 +1,6 @@
 import { getAiSettings } from "@/lib/settings";
 import { parseLlmAnalysis, type LlmAnalysis } from "./llm";
-import { getDomain } from "./url";
+import { getDomain, slugifyNodeName } from "./url";
 import { classifyTextToLccTopic, lccCanonicalTopics, lccTopicCatalogForPrompt, toLccTopicAnalysis } from "@/lib/taxonomy/lcc";
 
 type AnalyzeContext = {
@@ -195,9 +195,33 @@ function isContainerTopic(name: string): boolean {
   return containerTopics.has(name.toLowerCase());
 }
 
+function hasNode(analysis: LlmAnalysis, name: string): boolean {
+  const key = slugifyNodeName(name);
+  return analysis.nodes.some((node) => slugifyNodeName(node.name) === key);
+}
+
+function ensureDomainNodeCoverage(analysis: LlmAnalysis, matched: ReturnType<typeof classifyTextToLccTopic>): LlmAnalysis {
+  if (!matched?.rule.nodeHints?.length) return analysis;
+  const nodes = [...analysis.nodes];
+  for (const hint of matched.rule.nodeHints) {
+    if (hasNode({ ...analysis, nodes }, hint.name)) continue;
+    nodes.unshift({
+      type: hint.type,
+      name: hint.name,
+      description: hint.description,
+      relevance: 0.82,
+      claims: [`This reference has strong ${hint.name.toLowerCase()} signals.`],
+      evidence: [],
+    });
+  }
+  return { ...analysis, nodes: nodes.slice(0, 6) };
+}
+
 export function ensureDomainTopicCoverage(url: string, context: AnalyzeContext, analysis: LlmAnalysis): LlmAnalysis {
   const next: LlmAnalysis = { ...analysis, topics: [...analysis.topics] };
   const matched = classifyTextToLccTopic(context, next);
+  const withNodes = ensureDomainNodeCoverage(next, matched);
+  next.nodes = withNodes.nodes;
   if (matched && !hasTopic(next, matched.topic.name)) {
     const domainTopic = {
       ...toLccTopicAnalysis(matched),
