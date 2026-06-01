@@ -284,15 +284,15 @@ export function createLibraryStore(options: StoreOptions = {}) {
       edges: Array<{ id: string; from: string; to: string; relevance: number; kind: "block_node" | "topic_block" }>;
     }> {
       const data = await readData();
-      const blocks = visible(data.blocks); const nodes = visible(data.nodes); const topics = visible(data.topics);
+      const blocks = visible(data.blocks); const ids = linkedIds(blocks); const nodes = visible(data.nodes).filter((node) => ids.nodeIds.has(node.id)); const topics = visible(data.topics).filter((topic) => ids.topicIds.has(topic.id));
       const graphNodes = [
         ...blocks.map((block) => ({ id: block.id, label: block.title || block.domain, kind: "block" as const, href: `/blocks/${block.id}` })),
         ...nodes.map((node) => ({ id: node.id, label: node.name, kind: "wiki_node" as const, href: `/nodes/${node.slug}`, type: node.type })),
         ...topics.map((topic) => ({ id: topic.id, label: topic.name, kind: "topic" as const, href: `/topics/${topic.slug}` })),
       ];
       const edges = [
-        ...blocks.flatMap((block) => block.nodeLinks.map((link) => ({ id: `${block.id}-${link.nodeId}`, from: block.id, to: link.nodeId, relevance: link.relevance, kind: "block_node" as const }))),
-        ...blocks.flatMap((block) => block.topicLinks.map((link) => ({ id: `${link.topicId}-${block.id}`, from: link.topicId, to: block.id, relevance: link.confidence, kind: "topic_block" as const }))),
+        ...blocks.flatMap((block) => block.nodeLinks.filter((link) => ids.nodeIds.has(link.nodeId)).map((link) => ({ id: `${block.id}-${link.nodeId}`, from: block.id, to: link.nodeId, relevance: link.relevance, kind: "block_node" as const }))),
+        ...blocks.flatMap((block) => block.topicLinks.filter((link) => ids.topicIds.has(link.topicId)).map((link) => ({ id: `${link.topicId}-${block.id}`, from: link.topicId, to: block.id, relevance: link.confidence, kind: "topic_block" as const }))),
       ];
       return { nodes: graphNodes, edges };
     },
