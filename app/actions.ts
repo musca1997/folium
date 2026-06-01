@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { generateApiToken, revokeApiToken } from "@/lib/apiAuth";
 import { createLibraryBackup, restoreLibraryBackup } from "@/lib/backup";
 import { isAuthenticated, login, logout, updateCredentials, verifyCsrfToken } from "@/lib/auth";
-import { updateAiSettings } from "@/lib/settings";
+import { updateAiSettings, updateSummaryLanguageSettings } from "@/lib/settings";
 import { assertSafePublicUrl } from "@/lib/security/urlSafety";
 import { libraryStore } from "@/lib/store/library";
 
@@ -111,6 +111,16 @@ export async function updateAiSettingsAction(formData: FormData) {
     clearApiKey: formData.get("clearApiKey") === "on",
   });
   redirect("/settings?ai=updated");
+}
+
+export async function updateSummaryLanguageSettingsAction(formData: FormData) {
+  await requireAuthAndCsrf(formData, "/login?next=/settings");
+  await updateSummaryLanguageSettings({
+    enabled: formData.get("summaryLanguagesEnabled") === "on",
+    preferred: String(formData.get("preferredSummaryLanguage") ?? "en"),
+  });
+  for (const path of ["/settings", "/", "/search", "/topics", "/nodes"]) revalidatePath(path);
+  redirect("/settings?summaryLanguages=updated");
 }
 
 export async function generateApiTokenAction(formData: FormData) {

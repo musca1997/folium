@@ -10,17 +10,19 @@ import { SummaryToggle } from "@/components/SummaryToggle";
 import { deleteBlockAction, recaptureBlockAction, reprocessBlockWithAiAction, retryBlockProcessingAction, setManualContentAction, toggleBlockPinAction, updateBlockAction } from "@/app/actions";
 import { getCsrfToken, isAuthenticated } from "@/lib/auth";
 import { libraryStore } from "@/lib/store/library";
+import { getSettings } from "@/lib/settings";
 import { getWorkerHeartbeat } from "@/lib/workerHeartbeat";
 
 export default async function BlockPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const authed = await isAuthenticated();
-  const [block, nodes, topics, jobs, heartbeat] = await Promise.all([
+  const [block, nodes, topics, jobs, heartbeat, settings] = await Promise.all([
     authed ? libraryStore.getBlock(id) : libraryStore.getPublicBlock(id),
     authed ? libraryStore.listNodes() : libraryStore.listPublicNodes(),
     authed ? libraryStore.listTopics() : libraryStore.listPublicTopics(),
     authed ? libraryStore.listJobs() : Promise.resolve([]),
     getWorkerHeartbeat(),
+    getSettings(),
   ]);
   if (!block) notFound();
   const latestJob = jobs.filter((job) => job.blockId === block.id).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0] ?? null;
@@ -33,7 +35,7 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
       <AutoRefresh active={block.status !== "indexed" && block.status !== "failed"} />
       <main className="mx-auto max-w-6xl px-5 py-6">
         <PageIntro eyebrow="Saved reference" title={block.title} description={undefined} />
-        <SummaryToggle summary={block.summary} summaryZh={block.summaryTranslations?.zh} fallback={block.description || `A page saved from ${block.domain}.`} />
+        <SummaryToggle summary={block.summary} summaryZh={block.summaryTranslations?.zh} fallback={block.description || `A page saved from ${block.domain}.`} multilingualEnabled={settings.summaryLanguages.enabled} preferredLanguage={settings.summaryLanguages.preferred} />
         <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_320px]">
           <section>
             <div className="flex aspect-video items-center justify-center overflow-hidden border border-line bg-soft text-sm text-muted">

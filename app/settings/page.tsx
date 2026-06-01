@@ -1,14 +1,14 @@
 import { redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { PageIntro } from "@/components/PageIntro";
-import { createBackupAction, generateApiTokenAction, logoutAction, restoreBackupAction, revokeApiTokenAction, updateAiSettingsAction, updateCredentialsAction } from "@/app/actions";
+import { createBackupAction, generateApiTokenAction, logoutAction, restoreBackupAction, revokeApiTokenAction, updateAiSettingsAction, updateCredentialsAction, updateSummaryLanguageSettingsAction } from "@/app/actions";
 import { getAuthUser, getCsrfToken, getSecurityStatus, isAuthenticated } from "@/lib/auth";
 import { listLibraryBackups } from "@/lib/backup";
 import { getAiSettings, getSettings } from "@/lib/settings";
 
-export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ error?: string; ai?: string; backup?: string; api?: string; apiToken?: string }> }) {
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ error?: string; ai?: string; summaryLanguages?: string; backup?: string; api?: string; apiToken?: string }> }) {
   if (!(await isAuthenticated())) redirect("/login?next=/settings");
-  const [{ error, ai: aiStatus, backup: backupStatus, api: apiStatus, apiToken }, user, ai, settings, csrf, security, backups] = await Promise.all([searchParams, getAuthUser(), getAiSettings(), getSettings(), getCsrfToken(), getSecurityStatus(), listLibraryBackups()]);
+  const [{ error, ai: aiStatus, summaryLanguages: summaryLanguagesStatus, backup: backupStatus, api: apiStatus, apiToken }, user, ai, settings, csrf, security, backups] = await Promise.all([searchParams, getAuthUser(), getAiSettings(), getSettings(), getCsrfToken(), getSecurityStatus(), listLibraryBackups()]);
   const apiTokens = settings.api.tokens ?? [];
 
   return (
@@ -82,6 +82,31 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               <p className="mt-3">The saved key is used for summaries, topics, wiki nodes, claims, and evidence extraction.</p>
               <p className="mt-4">Status: {ai.apiKey || process.env.OPENAI_API_KEY ? "API key configured" : "No API key configured"}.</p>
               <p className="mt-4">Saved keys are never displayed back in the interface.</p>
+            </aside>
+          </section>
+
+          <section className="grid gap-6 md:grid-cols-[minmax(0,1fr)_260px]">
+            <form action={updateSummaryLanguageSettingsAction} className="space-y-4 border border-line p-5">
+              <input type="hidden" name="csrf" value={csrf} />
+              <p className="text-xs uppercase tracking-wide text-muted">Summary language</p>
+              <label className="flex items-center gap-2 text-sm text-muted">
+                <input type="checkbox" name="summaryLanguagesEnabled" defaultChecked={settings.summaryLanguages.enabled} />
+                Enable multilingual summaries
+              </label>
+              <label className="block text-sm">
+                Additional language
+                <select name="preferredSummaryLanguage" defaultValue={settings.summaryLanguages.preferred === "zh" ? "zh" : "en"} className="mt-2 w-full border border-line px-3 py-2 text-sm outline-none focus:border-ink">
+                  <option value="en">English only</option>
+                  <option value="zh">中文</option>
+                </select>
+              </label>
+              {summaryLanguagesStatus === "updated" ? <p className="text-xs text-muted">Summary language settings saved.</p> : null}
+              <button className="border border-ink px-4 py-2 text-sm hover:bg-ink hover:text-white" type="submit">Save summary language</button>
+            </form>
+            <aside className="border border-line p-5 text-sm leading-relaxed text-muted">
+              <p className="text-xs uppercase tracking-wide">Display</p>
+              <p className="mt-3">When multilingual summaries are off, block pages show the English summary only.</p>
+              <p className="mt-4">When enabled, Folium can generate and display an additional summary language. Currently only Chinese is available.</p>
             </aside>
           </section>
 

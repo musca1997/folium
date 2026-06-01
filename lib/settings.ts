@@ -24,13 +24,20 @@ export type ApiSettings = {
   updatedAt?: string;
 };
 
+export type SummaryLanguageSettings = {
+  enabled: boolean;
+  preferred: "en" | "zh";
+};
+
 export type AppSettings = {
   ai: AiSettings;
   api: ApiSettings;
+  summaryLanguages: SummaryLanguageSettings;
 };
 
-const defaultSettings: AppSettings = { ai: {}, api: {} };
-let testSettings: AppSettings = { ai: {}, api: {} };
+const defaultSummaryLanguageSettings: SummaryLanguageSettings = { enabled: false, preferred: "en" };
+const defaultSettings: AppSettings = { ai: {}, api: {}, summaryLanguages: defaultSummaryLanguageSettings };
+let testSettings: AppSettings = { ai: {}, api: {}, summaryLanguages: defaultSummaryLanguageSettings };
 
 function normalizeApiSettings(api: ApiSettings | undefined): ApiSettings {
   const tokens = [...(api?.tokens ?? [])];
@@ -40,11 +47,16 @@ function normalizeApiSettings(api: ApiSettings | undefined): ApiSettings {
   return { ...api, tokens };
 }
 
+function normalizeSummaryLanguageSettings(settings: SummaryLanguageSettings | undefined): SummaryLanguageSettings {
+  if (!settings?.enabled) return { ...defaultSummaryLanguageSettings };
+  return { enabled: true, preferred: settings.preferred === "zh" ? "zh" : "en" };
+}
+
 export async function getSettings(): Promise<AppSettings> {
-  if (process.env.VITEST) return { ai: { ...testSettings.ai }, api: normalizeApiSettings(testSettings.api) };
+  if (process.env.VITEST) return { ai: { ...testSettings.ai }, api: normalizeApiSettings(testSettings.api), summaryLanguages: normalizeSummaryLanguageSettings(testSettings.summaryLanguages) };
   try {
     const parsed = JSON.parse(await readFile(settingsPath, "utf8")) as Partial<AppSettings>;
-    return { ai: { ...(parsed.ai ?? {}) }, api: normalizeApiSettings(parsed.api) };
+    return { ai: { ...(parsed.ai ?? {}) }, api: normalizeApiSettings(parsed.api), summaryLanguages: normalizeSummaryLanguageSettings(parsed.summaryLanguages) };
   } catch {
     return defaultSettings;
   }
@@ -61,6 +73,19 @@ async function writeSettings(settings: AppSettings): Promise<void> {
   }
   await mkdir(join(process.cwd(), "data"), { recursive: true });
   await writeFile(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
+}
+
+export async function updateSummaryLanguageSettings(input: { enabled?: boolean; preferred?: string }): Promise<AppSettings> {
+  const current = await getSettings();
+  const next: AppSettings = {
+    ...current,
+    summaryLanguages: {
+      enabled: input.enabled === true,
+      preferred: input.enabled === true && input.preferred === "zh" ? "zh" : "en",
+    },
+  };
+  await writeSettings(next);
+  return next;
 }
 
 export async function updateAiSettings(input: { apiKey?: string; baseUrl?: string; model?: string; clearApiKey?: boolean }): Promise<AppSettings> {
