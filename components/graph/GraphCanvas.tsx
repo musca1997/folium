@@ -46,7 +46,7 @@ export function GraphCanvas({ width, height, nodes, edges }: GraphCanvasProps) {
   const [scale, setScale] = useState(0.72);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [dragStart, setDragStart] = useState<{ x: number; y: number; panX: number; panY: number } | null>(null);
-  const [showLabels, setShowLabels] = useState(false);
+  const [showLabels, setShowLabels] = useState(true);
   const [showSources, setShowSources] = useState(false);
   const [minRelevance, setMinRelevance] = useState(0.75);
   const [detail, setDetail] = useState<DetailLevel>("content");
