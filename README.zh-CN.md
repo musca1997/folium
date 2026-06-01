@@ -14,23 +14,23 @@ Folium 会保存链接、抽取可读正文、捕获视觉预览、总结页面�
 
 ### Library
 
-![Folium visual library](docs/screenshots/library.png?v=20260601-2)
+![Folium visual library](docs/screenshots/library-20260601-2.png)
 
 ### Block 详情
 
-![Folium block detail](docs/screenshots/block-detail.png?v=20260601-2)
+![Folium block detail](docs/screenshots/block-detail-20260601-2.png)
 
 ### Topics 与 Nodes
 
-![Folium topics](docs/screenshots/topics.png?v=20260601-2)
+![Folium topics](docs/screenshots/topics-20260601-2.png)
 
 ### Graph
 
-![Folium graph](docs/screenshots/graph.png?v=20260601-2)
+![Folium graph](docs/screenshots/graph-20260601-2.png)
 
 ### Search
 
-![Folium search](docs/screenshots/search.png?v=20260601-2)
+![Folium search](docs/screenshots/search-20260601-2.png)
 
 ## 功能
 
