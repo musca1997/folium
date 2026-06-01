@@ -123,7 +123,7 @@ Generate Agent API tokens in Settings. Use them for the CLI, Web Clipper, HTTP A
 ## Limitations
 
 - JSON storage is used for the current prototype; SQLite/Postgres is planned.
-- Taxonomy quality depends on the configured LLM and is still being tuned.
+- Taxonomy uses LCC canonical topics with deterministic node hints, but curation and review controls are still being tuned.
 - Some sites block extraction or screenshot capture; use manual fallback or the Web Clipper.
 - The taxonomy admin UI exists but is not exposed in the main navigation yet.
 - Bulk import/export, richer document extraction, and semantic search are still on the roadmap.
@@ -146,32 +146,36 @@ Completed foundation:
 - [x] Backup/restore UI.
 - [x] Manual content fallback and browser-provided clipping for blocked/login-gated pages.
 - [x] Topics/nodes browse page, standalone search page, graph view, pinning, and processing controls.
-- [x] Coarse domain topic coverage and topic/node tag display on cards.
+- [x] LCC canonical topic registry, deterministic domain nodes, and topic/node tag display on cards.
+- [x] Bilingual English/Chinese summaries with a settings-controlled summary language toggle.
+- [x] Graph readability improvements with LCC topic islands, source hiding, relevance filtering, hover focus, and orphan-node filtering.
 
 Near term:
 
+- [ ] Add block-level manual topic/node editing and override controls.
 - [ ] Improve worker diagnostics and processing event history.
+- [ ] Add a review queue for taxonomy suggestions before they affect the global graph.
+- [ ] Record deterministic taxonomy explanations: matched LCC rule, terms, source, and added node hints.
+- [ ] Add import/export for JSON and browser bookmarks first, then Markdown, Linkding, and Raindrop.
 - [ ] Add API route and CLI command tests.
 - [ ] Package the CLI for easier local/global install.
 - [ ] Add production Docker health checks and systemd/Caddy/nginx examples.
 - [ ] Add Library list view, density controls, and bulk actions.
-- [ ] Add import/export for bookmarks, JSON, Markdown, Linkding, and Raindrop.
 
 Taxonomy and curation quality:
 
-- [ ] Move domain topic rules into a dedicated taxonomy module.
-- [ ] Record why deterministic topics were added, including matched rules, terms, and evidence source.
-- [ ] Add negative/context rules to reduce false-positive topics such as music, security, and design.
+- [x] Move canonical taxonomy and deterministic LCC rules into a dedicated taxonomy module.
+- [ ] Split taxonomy explanation, review, and override flows into dedicated modules.
+- [ ] Add negative/context rules to reduce false-positive nodes and topic hints.
 - [ ] Finish taxonomy rename, alias, merge, delete, and canonical review flows.
-- [ ] Add block-level manual topic/node editing and override controls.
-- [ ] Add a review queue for taxonomy suggestions before they affect the global graph.
+- [ ] Add derived topic-node visual edges and stronger low-signal node pruning.
 
 Search and storage:
 
 - [ ] Move from JSON storage to SQLite or Postgres.
 - [ ] Add full-text indexes.
 - [ ] Add embeddings and semantic search.
-- [ ] Improve graph edge extraction and low-signal node hiding.
+- [ ] Add richer graph edge extraction beyond block-topic and block-node links.
 
 Content support:
 

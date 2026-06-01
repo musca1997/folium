@@ -123,7 +123,7 @@ npx playwright install chromium
 ## 当前限制
 
 - 当前原型使用 JSON 存储；后续计划迁移到 SQLite/Postgres。
-- 分类质量依赖配置的 LLM，仍在调优。
+- 分类使用 LCC canonical topics 与 deterministic node hints，但策展和审核控制仍在调优。
 - 部分网站会阻止抽取或截图；可以使用手动 fallback 或 Web Clipper。
 - 分类管理 UI 已存在，但尚未放到主导航。
 - 批量导入/导出、更丰富的文档抽取和语义搜索仍在路线图中。
@@ -146,32 +146,36 @@ npx playwright install chromium
 - [x] 添加 Backup/restore UI。
 - [x] 为 blocked/login-gated 页面添加手动内容 fallback 和浏览器提供内容的 clipping。
 - [x] 添加 Topics/Nodes 浏览页、独立 Search 页、Graph 视图、pinning 和 processing controls。
-- [x] 添加粗粒度 domain topic coverage，并在卡片上显示 topic/node tags。
+- [x] 添加 LCC canonical topic registry、deterministic domain nodes，并在卡片上显示 topic/node tags。
+- [x] 添加中英文双语 summaries，并通过 Settings 控制 summary language toggle。
+- [x] 改进 Graph 可读性：LCC topic islands、隐藏 source、relevance filtering、hover focus 和 orphan-node filtering。
 
 近期：
 
+- [ ] 添加 block-level 手动 topic/node 编辑和 override controls。
 - [ ] 改进 worker diagnostics 与 processing event history。
+- [ ] 添加 taxonomy suggestions review queue，审核后再影响全局图谱。
+- [ ] 记录 deterministic taxonomy explanations：命中的 LCC rule、terms、source 和添加的 node hints。
+- [ ] 先添加 JSON 与浏览器 bookmarks 导入/导出，再支持 Markdown、Linkding 和 Raindrop。
 - [ ] 添加 API route 和 CLI command 测试。
 - [ ] 打包 CLI，方便本地/全局安装。
 - [ ] 添加生产 Docker health checks 和 systemd/Caddy/nginx 示例。
 - [ ] 添加 Library list view、密度控制和批量操作。
-- [ ] 添加 bookmarks、JSON、Markdown、Linkding、Raindrop 导入/导出。
 
 Taxonomy 与策展质量：
 
-- [ ] 将 domain topic rules 移到独立 taxonomy module。
-- [ ] 记录 deterministic topics 被添加的原因，包括命中的规则、关键词和证据来源。
-- [ ] 添加 negative/context rules，减少 music、security、design 等误分类。
+- [x] 将 canonical taxonomy 和 deterministic LCC rules 移到独立 taxonomy module。
+- [ ] 将 taxonomy explanation、review 和 override flows 拆到独立模块。
+- [ ] 添加 negative/context rules，减少误判 nodes 和 topic hints。
 - [ ] 完成 taxonomy rename、alias、merge、delete 和 canonical review flows。
-- [ ] 添加 block-level 手动 topic/node 编辑和 override controls。
-- [ ] 添加 taxonomy suggestions review queue，审核后再影响全局图谱。
+- [ ] 添加 derived topic-node visual edges 和更强的 low-signal node pruning。
 
 搜索与存储：
 
 - [ ] 从 JSON 存储迁移到 SQLite 或 Postgres。
 - [ ] 添加全文索引。
 - [ ] 添加 embeddings 与语义搜索。
-- [ ] 改进图谱边抽取和低信号节点隐藏。
+- [ ] 添加更丰富的 graph edge extraction，不只依赖 block-topic 和 block-node links。
 
 内容支持：
 
