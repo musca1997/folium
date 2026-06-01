@@ -1,6 +1,7 @@
 import { getAiSettings } from "@/lib/settings";
 import { parseLlmAnalysis, type LlmAnalysis } from "./llm";
 import { getDomain } from "./url";
+import { classifyTextToLccTopic, lccCanonicalTopics, lccTopicCatalogForPrompt, toLccTopicAnalysis } from "@/lib/taxonomy/lcc";
 
 type AnalyzeContext = {
   title?: string;
@@ -20,10 +21,10 @@ type OpenAIChatResponse = {
 
 export function buildAnalysisPrompt(url: string, context: AnalyzeContext = {}): string {
   const text = (context.textContent ?? "").replace(/\s+/g, " ").slice(0, 12_000);
-  const topicCatalog = (context.existingTopics ?? []).slice(0, 120).map((topic) => `- ${topic.name}${topic.description ? `: ${topic.description}` : ""}`).join("\n");
+  const topicCatalog = lccTopicCatalogForPrompt();
   const nodeCatalog = (context.existingNodes ?? []).slice(0, 180).map((node) => `- ${node.name}${node.type ? ` (${node.type})` : ""}${node.description ? `: ${node.description}` : ""}`).join("\n");
   return `You are the AI librarian for Folium, a self-hosted visual knowledge library.
-Analyze this saved web reference and classify it into topic clusters plus free graph wiki nodes.
+Analyze this saved web reference and classify it into Library of Congress Classification topics plus free graph wiki nodes.
 
 Return only JSON. Do not wrap it in markdown. Do not add commentary.
 The JSON shape must be:
@@ -31,7 +32,7 @@ The JSON shape must be:
   "summary": "one or two concise sentences",
   "topics": [
     {
-      "name": "broad human-meaningful topic cluster, e.g. Cybersecurity, Visual Research, Self-hosting, Game Archives",
+      "name": "one exact canonical Library of Congress class name from the allowed list below, e.g. Science, Technology, Music, Fine Arts",
       "description": "what this topic means in this personal library",
       "confidence": 0.0,
       "claims": ["short claim explaining the page-topic relationship"],
@@ -50,20 +51,22 @@ The JSON shape must be:
   ]
 }
 
-Existing taxonomy in this library. Reuse these exact names when they fit.
+Allowed canonical topics. Topics must use one of these exact Library of Congress Classification class names. Do not invent new topic names.
 
-Existing topics:
-${topicCatalog || "- None yet"}
+Canonical topics:
+${topicCatalog}
 
 Existing nodes:
 ${nodeCatalog || "- None yet"}
 
 Rules:
-- Before creating a new topic or node, check the existing taxonomy above.
-- Prefer reusing an existing topic/node exact name if it is semantically close, even if the wording is not perfect.
-- Only create a new topic/node when none of the existing names fit well.
-- Do not create near-duplicates, plural variants, casing variants, or narrower synonyms of existing names.
-- Prefer 1 to 2 broad topic clusters that could group many future links.
+- Topics must be selected from the canonical topic list above using exact names.
+- Do not create new topic names. If none fits exactly, choose the nearest broader LCC class.
+- Put modern or specific labels such as AI, Machine Learning, Cybersecurity, Self-hosting, LoRa, Meshtastic, Software Development, Design, Musicology, and Archives into nodes, not topic names.
+- Before creating a new node, check the existing nodes above.
+- Prefer reusing an existing node exact name if it is semantically close, even if the wording is not perfect.
+- Do not create near-duplicates, plural variants, casing variants, or narrower synonyms of existing node names.
+- Prefer 1 to 2 broad canonical topic classes.
 - Prefer 3 to 5 high-signal nodes.
 - Use coarse taxonomy mode: fewer, broader, more reusable topics and nodes are better than many precise ones.
 - Only keep a node if it could plausibly connect at least 3 future saved links in this library, or if it is the main saved source/project/person/work.
@@ -162,13 +165,6 @@ async function analyzeWithOpenAI(url: string, context: AnalyzeContext): Promise<
   return parseLlmAnalysis(content);
 }
 
-type DomainTopicRule = {
-  name: string;
-  description: string;
-  patterns: RegExp[];
-  minMatches?: number;
-};
-
 const containerTopics = new Set([
   "web curation",
   "personal blogs and web publishing",
@@ -178,27 +174,9 @@ const containerTopics = new Set([
   "online communities",
 ]);
 
-const domainTopicRules: DomainTopicRule[] = [
-  { name: "Wireless Communication", description: "Radio systems, mesh networks, LoRa, off-grid messaging, and resilient communication infrastructure.", patterns: [/\b(wireless communication|lora|meshtastic|meshcore|mesh networking|mesh network|off-grid communication|emergency communication|radio network|ham radio|amateur radio|packet radio|cn470|470mhz|480mhz)\b/] },
-  { name: "Hardware and Electronics", description: "Electronics, embedded systems, microcontrollers, devices, sensors, repair, and physical computing hardware.", patterns: [/\b(hardware|electronics|embedded|microcontroller|esp32|arduino|raspberry pi|pcb|soldering|sensor|sensors|battery|solar|firmware|tinylora|m5stack|lora module|circuit|device build)\b/] },
-  { name: "Music and Musicology", description: "Music culture, composition, instruments, sound practices, and computational or historical music research.", minMatches: 1, patterns: [/\b(music|musical|musicology|musicologist|composer|luthier|guitar|electronic music|k-pop|song|songs)\b/, /\b(musical instrument|music score|musical score|sheet music|sound art|sonic art|composition practice)\b/] },
-  { name: "Mathematics", description: "Mathematical ideas, proofs, structures, fields, education, and mathematical culture.", patterns: [/\b(mathematics|math|mathematical|algebra|topology|geometry|calculus|probability|statistics|combinatorics|graph theory|number theory|proof|theorem|category theory)\b/] },
-  { name: "Philosophy", description: "Philosophical traditions, arguments, thinkers, metaphysics, ethics, epistemology, and critical theory.", patterns: [/\b(philosophy|philosopher|philosophical|metaphysics|epistemology|ethics|ontology|nihilism|posthumanism|accelerationism|phenomenology|critical theory|anti-humanism)\b/] },
-  { name: "Cybersecurity", description: "Security research, hacking practice, vulnerability learning, privacy, and defensive or offensive security tools.", patterns: [/\b(cybersecurity|hacking|infosec|vulnerability|exploit|ctf|malware|phishing|cryptography|penetration testing|xss|sql injection|threat model|reverse engineering)\b/] },
-  { name: "Game Development", description: "Game design, game engines, interactive systems, homebrew games, and playable software projects.", patterns: [/\b(game development|game design|game engine|games|gameplay|homebrew app|emulator|emulation|rom|nintendo|switch|wii u|unity|godot|unreal)\b/] },
-  { name: "Self-hosting", description: "Personal infrastructure, home servers, deployment, networking, and locally operated software.", patterns: [/\b(self-hosting|self hosting|home server|homelab|docker|nginx|caddy|tailscale|nas|reverse proxy|systemd|vps|kubernetes|postgres|matrix server)\b/] },
-  { name: "AI and Machine Learning", description: "Artificial intelligence, machine learning systems, language models, agents, datasets, and AI-assisted workflows.", patterns: [/\b(artificial intelligence|machine learning|llm|llms|language model|language models|neural network|neural networks|transformer|rag|embedding|embeddings|inference|fine-tuning|pretraining|mixture of experts|interpretability|activation|activations)\b/] },
-  { name: "Software Development", description: "Programming, developer tools, software architecture, code repositories, languages, and engineering workflows.", patterns: [/\b(software development|programming|developer tool|developer tools|code|coding|framework|api|sdk|typescript|javascript|python|rust|go programming|github repository|open source software|package manager)\b/] },
-  { name: "Art and Visual Culture", description: "Art, images, visual research, aesthetics, media artifacts, and visual cultural references.", patterns: [/\b(art|artist|visual culture|aesthetic|image|images|photography|film|cinema|video art|painting|gallery|exhibition|illustration|graphic design)\b/] },
-  { name: "Design", description: "Interface design, product design, typography, interaction, visual systems, and design practice.", patterns: [/\b(design|designer|typography|interface design|interaction design|product design|ux|ui design|visual design|design system|layout|branding)\b/] },
-  { name: "Archives and Databases", description: "Directories, archives, datasets, catalogs, repositories, and structured collections of reusable references.", patterns: [/\b(archive|archives|database|dataset|directory|catalog|repository|collection|index|bibliography|resources|metadata|spreadsheet)\b/] },
-  { name: "Education and Learning", description: "Learning resources, tutorials, courses, pedagogy, study notes, and knowledge-building practices.", patterns: [/\b(education|learning|tutorial|course|curriculum|study|teaching|pedagogy|textbook|lesson|practice|challenge|lecture|workshop)\b/] },
-  { name: "Literature and Writing", description: "Writing, essays, fiction, poetry, publishing, literary culture, and textual craft.", patterns: [/\b(literature|writing|essay|essays|fiction|poetry|novel|short story|zine|publishing|writer|literary|prose|memoir)\b/] },
-  { name: "Media Studies", description: "Media platforms, internet culture, film, video, fandom, journalism, and cultural analysis of media systems.", patterns: [/\b(media studies|internet culture|journalism|platform|social media|fandom|meme|memes|youtube|tiktok|television|streaming|broadcast|press)\b/] },
-  { name: "Politics and Society", description: "Politics, institutions, social movements, governance, public policy, and social analysis.", patterns: [/\b(politics|political|society|social movement|governance|policy|public policy|state|government|institution|democracy|activism|labor|economics)\b/] },
-  { name: "Science and Research", description: "Scientific research, papers, experiments, methods, laboratories, and scholarly knowledge outside narrower domains.", patterns: [/\b(science|scientific|research|paper|papers|experiment|laboratory|biology|physics|chemistry|astronomy|neuroscience|methodology|peer review)\b/] },
-  { name: "Future Studies", description: "Speculative futures, foresight, long-term scenarios, technology futures, and future-oriented cultural analysis.", patterns: [/\b(future studies|futures|foresight|scenario planning|speculative future|longtermism|singularity|post-scarcity|techno-utopian|dystopia)\b/] },
-];
+function isLccTopic(name: string): boolean {
+  return lccCanonicalTopics.some((topic) => topic.name.toLowerCase() === name.toLowerCase());
+}
 
 function hasTopic(analysis: LlmAnalysis, name: string): boolean {
   return analysis.topics.some((topic) => topic.name.toLowerCase() === name.toLowerCase());
@@ -219,31 +197,28 @@ function isContainerTopic(name: string): boolean {
 
 export function ensureDomainTopicCoverage(url: string, context: AnalyzeContext, analysis: LlmAnalysis): LlmAnalysis {
   const next: LlmAnalysis = { ...analysis, topics: [...analysis.topics] };
-  const haystack = topicEvidenceText(context, next);
-  const matched = domainTopicRules.find((rule) => rule.patterns.filter((pattern) => pattern.test(haystack)).length >= (rule.minMatches ?? 1));
-  if (matched && !hasTopic(next, matched.name)) {
+  const matched = classifyTextToLccTopic(context, next);
+  if (matched && !hasTopic(next, matched.topic.name)) {
     const domainTopic = {
-      name: matched.name,
-      description: matched.description,
-      confidence: 0.82,
-      claims: [`This reference has strong ${matched.name.toLowerCase()} signals in its title, text, or extracted nodes.`],
+      ...toLccTopicAnalysis(matched),
       evidence: context.title ? [{ quote: context.title.slice(0, 280), source: "title" as const }] : [],
     };
-    const nonDuplicate = next.topics.filter((topic) => topic.name.toLowerCase() !== matched.name.toLowerCase());
-    const highValueExisting = nonDuplicate.filter((topic) => !isContainerTopic(topic.name) || topic.confidence >= 0.75);
+    const nonDuplicate = next.topics.filter((topic) => topic.name.toLowerCase() !== matched.topic.name.toLowerCase());
+    const highValueExisting = nonDuplicate.filter((topic) => isLccTopic(topic.name) && (!isContainerTopic(topic.name) || topic.confidence >= 0.75));
     next.topics = [domainTopic, ...highValueExisting].slice(0, 2);
   }
+  next.topics = next.topics.filter((topic) => isLccTopic(topic.name)).slice(0, 2);
   if (next.topics.length > 0) return next;
   const domain = getDomain(url);
   const anchor = next.nodes.find((node) => node.type === "Technology" || node.type === "Concept" || node.type === "Project")?.name;
-  const name = anchor || "Web Curation";
+  const name = "General Works";
   return {
     ...next,
     topics: [{
       name,
-      description: anchor ? `Saved references related to ${anchor}.` : "Saved web references and link organization.",
+      description: "Library of Congress class A: general works, encyclopedias, periodicals, and broad reference works.",
       confidence: 0.55,
-      claims: [`${domain} was saved as a reference related to ${name}.`],
+      claims: [`${domain} was saved as a general reference${anchor ? ` related to ${anchor}` : ""}.`],
       evidence: context.description ? [{ quote: context.description.slice(0, 280), source: "description" as const }] : [],
     }],
   };

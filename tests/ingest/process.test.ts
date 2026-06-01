@@ -17,7 +17,8 @@ describe("buildAnalysisPrompt", () => {
     expect(prompt).toContain("Return only JSON");
     expect(prompt).toContain("summary");
     expect(prompt).toContain("nodes");
-    expect(prompt).toContain("Existing topics:");
+    expect(prompt).toContain("Canonical topics:");
+    expect(prompt).toContain("Library of Congress");
     expect(prompt).toContain("Digital gardens");
   });
 });
@@ -34,8 +35,8 @@ describe("ensureDomainTopicCoverage", () => {
       nodes: [{ type: "Concept", name: "Computational musicology", description: "Music research with computation.", relevance: 0.9, claims: [], evidence: [] }],
     });
 
-    expect(result.topics.map((topic) => topic.name)).toContain("Music and Musicology");
-    expect(result.topics[0]?.name).toBe("Music and Musicology");
+    expect(result.topics.map((topic) => topic.name)).toContain("Music");
+    expect(result.topics[0]?.name).toBe("Music");
   });
 
   it("promotes mathematics over container topics", () => {
@@ -48,7 +49,7 @@ describe("ensureDomainTopicCoverage", () => {
       nodes: [{ type: "Concept", name: "Abstract algebra", description: "A field of mathematics.", relevance: 0.9, claims: [], evidence: [] }],
     });
 
-    expect(result.topics[0]?.name).toBe("Mathematics");
+    expect(result.topics[0]?.name).toBe("Science");
   });
 
   it("promotes philosophy over future studies when philosophy evidence is stronger", () => {
@@ -61,7 +62,7 @@ describe("ensureDomainTopicCoverage", () => {
       nodes: [{ type: "Person", name: "Nick Land", description: "Philosopher.", relevance: 0.9, claims: [], evidence: [] }],
     });
 
-    expect(result.topics[0]?.name).toBe("Philosophy");
+    expect(result.topics[0]?.name).toBe("Philosophy, Psychology, Religion");
   });
 
   it("does not promote music for AI papers that mention scores", () => {
@@ -75,11 +76,11 @@ describe("ensureDomainTopicCoverage", () => {
       nodes: [{ type: "Technology", name: "Claude", description: "Language model.", relevance: 0.9, claims: [], evidence: [] }],
     });
 
-    expect(result.topics.map((topic) => topic.name)).not.toContain("Music and Musicology");
-    expect(result.topics[0]?.name).toBe("AI and Machine Learning");
+    expect(result.topics.map((topic) => topic.name)).not.toContain("Music");
+    expect(result.topics[0]?.name).toBe("Science");
   });
 
-  it("promotes AI and machine learning for language model courses", () => {
+  it("promotes science for language model courses", () => {
     const result = ensureDomainTopicCoverage("https://www.youtube.com/playlist", {
       title: "Stanford CS336: Language Modeling from Scratch | Spring 2026",
       description: "A course about language models.",
@@ -90,7 +91,7 @@ describe("ensureDomainTopicCoverage", () => {
       nodes: [{ type: "Source", name: "YouTube", description: "Video platform.", relevance: 0.7, claims: [], evidence: [] }],
     });
 
-    expect(result.topics[0]?.name).toBe("AI and Machine Learning");
+    expect(result.topics[0]?.name).toBe("Science");
   });
 
   it("promotes wireless communication for LoRa mesh communities", () => {
@@ -110,7 +111,7 @@ describe("ensureDomainTopicCoverage", () => {
       ],
     });
 
-    expect(result.topics[0]?.name).toBe("Wireless Communication");
+    expect(result.topics[0]?.name).toBe("Technology");
   });
 
   it("promotes hardware and electronics for embedded device projects", () => {
@@ -123,7 +124,7 @@ describe("ensureDomainTopicCoverage", () => {
       nodes: [{ type: "Technology", name: "ESP32", description: "Microcontroller hardware.", relevance: 0.9, claims: [], evidence: [] }],
     });
 
-    expect(result.topics[0]?.name).toBe("Hardware and Electronics");
+    expect(result.topics[0]?.name).toBe("Technology");
   });
 });
 
@@ -182,6 +183,6 @@ describe("analyzeUrl", () => {
       textContent: "Meshtastic LoRa mesh networking off-grid emergency communication solar nodes",
     });
 
-    expect(result.topics[0]?.name).toBe("Wireless Communication");
+    expect(result.topics[0]?.name).toBe("Technology");
   });
 });

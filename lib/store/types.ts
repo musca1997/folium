@@ -61,7 +61,7 @@ export type WikiNode = {
   slug: string;
   description: string;
   aliases?: string[];
-  externalSource?: "wikidata" | "local" | "llm";
+  externalSource?: "wikidata" | "local" | "llm" | "lcc";
   externalId?: string;
   externalUrl?: string;
   createdAt: string;
@@ -75,7 +75,7 @@ export type Topic = {
   slug: string;
   description: string;
   aliases?: string[];
-  externalSource?: "wikidata" | "local" | "llm";
+  externalSource?: "wikidata" | "local" | "llm" | "lcc";
   externalId?: string;
   externalUrl?: string;
   createdAt: string;

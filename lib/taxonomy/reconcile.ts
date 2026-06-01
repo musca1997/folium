@@ -1,13 +1,14 @@
 import type { Topic, WikiNode } from "@/lib/store/types";
 import { slugifyNodeName } from "@/lib/ingest/url";
 import { findWikidataMatch, type WikidataMatch } from "./wikidata";
+import { findLccTopicByName, type LccCanonicalTopic } from "./lcc";
 
 export type CanonicalReference = {
   name: string;
   slug: string;
   description?: string;
   aliases: string[];
-  externalSource?: "wikidata" | "local" | "llm";
+  externalSource?: "wikidata" | "local" | "llm" | "lcc";
   externalId?: string;
   externalUrl?: string;
 };
@@ -34,12 +35,22 @@ function fromWikidata(match: WikidataMatch): CanonicalReference {
   return { name: match.label, slug: slugifyNodeName(match.label), description: match.description, aliases: match.aliases, externalSource: "wikidata", externalId: match.id, externalUrl: match.url };
 }
 
+function fromLcc(topic: LccCanonicalTopic): CanonicalReference {
+  return { name: topic.name, slug: topic.slug, description: topic.description, aliases: topic.aliases, externalSource: "lcc", externalId: `lcc:${topic.code}`, externalUrl: topic.externalUrl };
+}
+
 function isStrongWikidataMatch(query: string, match: WikidataMatch): boolean {
   const key = normalize(query);
   return normalize(match.label) === key || match.aliases.some((alias) => normalize(alias) === key);
 }
 
 export async function reconcileTopicName(name: string, topics: Topic[]): Promise<CanonicalReference> {
+  const lcc = findLccTopicByName(name);
+  if (lcc) {
+    const existing = findLocalTopicMatch(lcc.name, topics) ?? findLocalTopicMatch(lcc.slug, topics);
+    if (existing) return { name: existing.name, slug: existing.slug, description: existing.description, aliases: existing.aliases ?? [], externalSource: existing.externalSource, externalId: existing.externalId, externalUrl: existing.externalUrl };
+    return fromLcc(lcc);
+  }
   const local = findLocalTopicMatch(name, topics);
   if (local) return { name: local.name, slug: local.slug, description: local.description, aliases: local.aliases ?? [], externalSource: local.externalSource, externalId: local.externalId, externalUrl: local.externalUrl };
   const match = await findWikidataMatch(name);
