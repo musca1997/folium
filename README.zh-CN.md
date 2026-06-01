@@ -18,7 +18,7 @@ Folium 会保存链接、抽取可读正文、捕获视觉预览、总结页面�
 
 ### Block 详情
 
-![Folium block detail](docs/screenshots/block-detail-20260601-3.png)
+![Folium block detail](docs/screenshots/block-detail-20260601-4.png)
 
 ### Topics 与 Nodes
 
@@ -30,7 +30,7 @@ Folium 会保存链接、抽取可读正文、捕获视觉预览、总结页面�
 
 ### Search
 
-![Folium search](docs/screenshots/search-20260601-3.png)
+![Folium search](docs/screenshots/search-20260601-4.png)
 
 ## 功能
 

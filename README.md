@@ -18,7 +18,7 @@ Demo: https://folium.fyi/
 
 ### Block detail
 
-![Folium block detail](docs/screenshots/block-detail-20260601-3.png)
+![Folium block detail](docs/screenshots/block-detail-20260601-4.png)
 
 ### Topics and nodes
 
@@ -30,7 +30,7 @@ Demo: https://folium.fyi/
 
 ### Search
 
-![Folium search](docs/screenshots/search-20260601-3.png)
+![Folium search](docs/screenshots/search-20260601-4.png)
 
 ## Features
 
