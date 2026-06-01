@@ -14,7 +14,7 @@ Folium 会保存链接、抽取可读正文、捕获视觉预览、总结页面�
 
 ### Library
 
-![Folium visual library](docs/screenshots/library-20260601-3.png)
+![Folium visual library](docs/screenshots/library-20260601-4.png)
 
 ### Block 详情
 

@@ -14,7 +14,7 @@ Demo: https://folium.fyi/
 
 ### Library
 
-![Folium visual library](docs/screenshots/library-20260601-3.png)
+![Folium visual library](docs/screenshots/library-20260601-4.png)
 
 ### Block detail
 
