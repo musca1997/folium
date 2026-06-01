@@ -12,11 +12,6 @@ const statusCopy: Record<Block["status"], string> = {
   failed: "Failed",
 };
 
-function previewRatio(block: Block): string {
-  const seed = block.id.charCodeAt(block.id.length - 1) % 4;
-  return ["aspect-[4/3]", "aspect-square", "aspect-[3/4]", "aspect-[5/4]"][seed] ?? "aspect-[4/3]";
-}
-
 function initials(domain: string): string {
   return domain.replace(/^www\./, "").split(".")[0]?.slice(0, 2) || "f";
 }
@@ -26,9 +21,9 @@ export function BlockCard({ block, nodes, topics = [], authed = false, csrf = ""
   const image = block.screenshotPath ?? block.previewImage;
 
   return (
-    <article className="group border border-line bg-white transition-colors hover:bg-[#fbfbfb]">
-      <Link href={`/blocks/${block.id}`} className="block">
-        <div className={`relative flex ${previewRatio(block)} items-center justify-center overflow-hidden border-b border-line bg-soft text-center text-xs text-muted`}>
+    <article className="group flex h-full flex-col border border-line bg-white transition-colors hover:bg-[#fbfbfb]">
+      <Link href={`/blocks/${block.id}`} className="block flex-1">
+        <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden border-b border-line bg-soft text-center text-xs text-muted">
           {image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover grayscale transition duration-300 group-hover:grayscale-0" />
@@ -49,18 +44,20 @@ export function BlockCard({ block, nodes, topics = [], authed = false, csrf = ""
         </div>
         <div className="space-y-3 p-3">
           <div>
-            <h2 className="text-sm leading-snug group-hover:underline">{block.title || block.url}</h2>
-            <p className="mt-1 text-xs text-muted">{block.domain}</p>
+            <h2 className="line-clamp-3 min-h-[3.9rem] text-sm leading-snug group-hover:underline">{block.title || block.url}</h2>
+            <p className="mt-1 truncate text-xs text-muted">{block.domain}</p>
           </div>
           {block.summary || block.description ? (
-            <p className="text-xs leading-relaxed text-muted">{block.summary || block.description}</p>
+            <p className="line-clamp-7 min-h-[8.5rem] text-xs leading-relaxed text-muted">{block.summary || block.description}</p>
           ) : isProcessing ? (
-            <p className="text-xs leading-relaxed text-muted">This block has been saved and is waiting for the worker.</p>
-          ) : null}
+            <p className="line-clamp-7 min-h-[8.5rem] text-xs leading-relaxed text-muted">This block has been saved and is waiting for the worker.</p>
+          ) : (
+            <div className="min-h-[8.5rem]" />
+          )}
         </div>
       </Link>
-      <div className="space-y-3 px-3 pb-3">
-        <NodeChips block={block} nodes={nodes} topics={topics} />
+      <div className="mt-auto space-y-3 px-3 pb-3">
+        <NodeChips block={block} nodes={nodes} topics={topics} preview />
         {authed ? (
           <form action={toggleBlockPinAction}>
             <input type="hidden" name="csrf" value={csrf} />

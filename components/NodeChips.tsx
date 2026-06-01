@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Block, Topic, WikiNode } from "@/lib/store/types";
 
-export function NodeChips({ block, nodes, topics = [] }: { block: Block; nodes: WikiNode[]; topics?: Topic[] }) {
+export function NodeChips({ block, nodes, topics = [], preview = false }: { block: Block; nodes: WikiNode[]; topics?: Topic[]; preview?: boolean }) {
   const linkedTopics = block.topicLinks
     .map((link) => topics.find((topic) => topic.id === link.topicId))
     .filter((topic): topic is Topic => Boolean(topic));
@@ -12,7 +12,7 @@ export function NodeChips({ block, nodes, topics = [] }: { block: Block; nodes: 
   if (linkedTopics.length === 0 && linkedNodes.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className={`flex flex-wrap gap-1.5 ${preview ? "max-h-[4.875rem] overflow-hidden" : ""}`}>
       {linkedTopics.slice(0, 3).map((topic) => (
         <Link key={topic.id} href={`/topics/${topic.slug}`} className="border border-line px-2 py-0.5 text-xs font-semibold text-muted hover:border-ink hover:text-ink">
           {topic.name}
