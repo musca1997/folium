@@ -337,6 +337,69 @@ export function createLibraryStore(options: StoreOptions = {}) {
       });
     },
 
+    async addBlockTopicLink(blockId: string, topicId: string): Promise<Block> {
+      return updateData((data) => {
+        const block = data.blocks.find((item) => item.id === blockId);
+        if (!block) throw new Error(`Block not found: ${blockId}`);
+        const topic = data.topics.find((item) => item.id === topicId);
+        if (!topic) throw new Error(`Topic not found: ${topicId}`);
+        if (!block.topicLinks.some((link) => link.topicId === topicId)) block.topicLinks.push({ topicId, confidence: 1, reason: "Manually curated.", claims: [], evidence: [] });
+        block.updatedAt = nowIso();
+        return block;
+      });
+    },
+
+    async removeBlockTopicLink(blockId: string, topicId: string): Promise<Block> {
+      return updateData((data) => {
+        const block = data.blocks.find((item) => item.id === blockId);
+        if (!block) throw new Error(`Block not found: ${blockId}`);
+        block.topicLinks = block.topicLinks.filter((link) => link.topicId !== topicId);
+        block.updatedAt = nowIso();
+        return block;
+      });
+    },
+
+    async addBlockNodeLink(blockId: string, nodeId: string): Promise<Block> {
+      return updateData((data) => {
+        const block = data.blocks.find((item) => item.id === blockId);
+        if (!block) throw new Error(`Block not found: ${blockId}`);
+        const node = data.nodes.find((item) => item.id === nodeId);
+        if (!node) throw new Error(`Node not found: ${nodeId}`);
+        if (!block.nodeLinks.some((link) => link.nodeId === nodeId)) block.nodeLinks.push({ nodeId, relevance: 1, reason: "Manually curated.", claims: [], evidence: [] });
+        block.updatedAt = nowIso();
+        return block;
+      });
+    },
+
+    async addOrCreateBlockNodeLink(blockId: string, input: { name: string; type?: string; description?: string }): Promise<Block> {
+      const name = input.name.trim();
+      if (!name) throw new Error("Node name is required");
+      const canonical = await reconcileNodeName(name, (await readData()).nodes);
+      return updateData((data) => {
+        const block = data.blocks.find((item) => item.id === blockId);
+        if (!block) throw new Error(`Block not found: ${blockId}`);
+        let node = data.nodes.find((item) => item.slug === canonical.slug || (canonical.externalId && item.externalId === canonical.externalId));
+        const timestamp = nowIso();
+        if (!node) {
+          node = { id: makeId("node"), type: coerceNodeType(input.type ?? "Concept"), name: canonical.name, slug: canonical.slug, description: input.description?.trim() || canonical.description || `Manually curated node for ${canonical.name}.`, aliases: canonical.aliases, externalSource: canonical.externalSource, externalId: canonical.externalId, externalUrl: canonical.externalUrl, createdAt: timestamp, updatedAt: timestamp, curation: defaultCuration() };
+          data.nodes.push(node);
+        }
+        if (!block.nodeLinks.some((link) => link.nodeId === node.id)) block.nodeLinks.push({ nodeId: node.id, relevance: 1, reason: "Manually curated.", claims: [], evidence: [] });
+        block.updatedAt = timestamp;
+        return block;
+      });
+    },
+
+    async removeBlockNodeLink(blockId: string, nodeId: string): Promise<Block> {
+      return updateData((data) => {
+        const block = data.blocks.find((item) => item.id === blockId);
+        if (!block) throw new Error(`Block not found: ${blockId}`);
+        block.nodeLinks = block.nodeLinks.filter((link) => link.nodeId !== nodeId);
+        block.updatedAt = nowIso();
+        return block;
+      });
+    },
+
     async setProvidedContent(id: string, input: ProvidedContentInput): Promise<Block> {
       const text = input.contentText.replace(/\s+/g, " ").trim();
       if (text.length < 20) throw new Error("Provided content is too short");

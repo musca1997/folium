@@ -7,7 +7,7 @@ import { AutoRefresh } from "@/components/AutoRefresh";
 import { EvidenceList } from "@/components/EvidenceList";
 import { ProcessingTimeline } from "@/components/ProcessingTimeline";
 import { SummaryToggle } from "@/components/SummaryToggle";
-import { deleteBlockAction, recaptureBlockAction, reprocessBlockWithAiAction, retryBlockProcessingAction, setManualContentAction, toggleBlockPinAction, updateBlockAction } from "@/app/actions";
+import { addBlockNodeLinkAction, addBlockTopicLinkAction, addOrCreateBlockNodeLinkAction, deleteBlockAction, recaptureBlockAction, removeBlockNodeLinkAction, removeBlockTopicLinkAction, reprocessBlockWithAiAction, retryBlockProcessingAction, setManualContentAction, toggleBlockPinAction, updateBlockAction } from "@/app/actions";
 import { getCsrfToken, isAuthenticated } from "@/lib/auth";
 import { libraryStore } from "@/lib/store/library";
 import { getSettings } from "@/lib/settings";
@@ -28,6 +28,12 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
   const latestJob = jobs.filter((job) => job.blockId === block.id).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0] ?? null;
   const csrf = authed ? await getCsrfToken() : "";
   const blockedReason = typeof block.metadata?.extractionBlockedReason === "string" ? block.metadata.extractionBlockedReason : null;
+  const linkedTopicIds = new Set(block.topicLinks.map((link) => link.topicId));
+  const linkedNodeIds = new Set(block.nodeLinks.map((link) => link.nodeId));
+  const linkedTopics = block.topicLinks.map((link) => ({ link, topic: topics.find((topic) => topic.id === link.topicId) })).filter((item): item is { link: typeof block.topicLinks[number]; topic: (typeof topics)[number] } => Boolean(item.topic));
+  const linkedNodes = block.nodeLinks.map((link) => ({ link, node: nodes.find((node) => node.id === link.nodeId) })).filter((item): item is { link: typeof block.nodeLinks[number]; node: (typeof nodes)[number] } => Boolean(item.node));
+  const addableTopics = topics.filter((topic) => !linkedTopicIds.has(topic.id));
+  const addableNodes = nodes.filter((node) => !linkedNodeIds.has(node.id));
 
   return (
     <>
@@ -116,6 +122,73 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
                   <button type="submit" className="border border-ink px-3 py-1.5 text-sm hover:bg-ink hover:text-white">Save changes</button>
                 </form>
                 <div className="mt-4 border-t border-line pt-4">
+                  <p className="mb-3 text-xs uppercase tracking-wide text-muted">Manual curation</p>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <p className="mb-2 text-xs text-muted">Topics</p>
+                      <div className="space-y-2">
+                        {linkedTopics.map(({ topic }) => (
+                          <div key={topic.id} className="flex items-center justify-between gap-2 border border-line px-2 py-1.5 text-sm">
+                            <Link href={`/topics/${topic.slug}`} className="underline">{topic.name}</Link>
+                            <form action={removeBlockTopicLinkAction}>
+                              <input type="hidden" name="csrf" value={csrf} />
+                              <input type="hidden" name="blockId" value={block.id} />
+                              <input type="hidden" name="topicId" value={topic.id} />
+                              <button type="submit" className="text-xs text-muted underline hover:text-ink">Remove</button>
+                            </form>
+                          </div>
+                        ))}
+                        {linkedTopics.length === 0 ? <p className="text-xs text-muted">No topics linked.</p> : null}
+                      </div>
+                      <form action={addBlockTopicLinkAction} className="mt-2 flex gap-2">
+                        <input type="hidden" name="csrf" value={csrf} />
+                        <input type="hidden" name="blockId" value={block.id} />
+                        <select name="topicId" className="min-w-0 flex-1 border border-line bg-white px-2 py-1.5 text-xs text-ink">
+                          {addableTopics.map((topic) => <option key={topic.id} value={topic.id}>{topic.name}</option>)}
+                        </select>
+                        <button type="submit" disabled={addableTopics.length === 0} className="border border-line px-2 py-1.5 text-xs text-muted hover:border-ink hover:text-ink disabled:opacity-40">Add</button>
+                      </form>
+                    </div>
+                    <div>
+                      <p className="mb-2 text-xs text-muted">Nodes</p>
+                      <div className="space-y-2">
+                        {linkedNodes.map(({ node }) => (
+                          <div key={node.id} className="flex items-center justify-between gap-2 border border-line px-2 py-1.5 text-sm">
+                            <Link href={`/nodes/${node.slug}`} className="min-w-0 truncate underline">{node.name} <span className="text-xs text-muted">· {node.type}</span></Link>
+                            <form action={removeBlockNodeLinkAction}>
+                              <input type="hidden" name="csrf" value={csrf} />
+                              <input type="hidden" name="blockId" value={block.id} />
+                              <input type="hidden" name="nodeId" value={node.id} />
+                              <button type="submit" className="text-xs text-muted underline hover:text-ink">Remove</button>
+                            </form>
+                          </div>
+                        ))}
+                        {linkedNodes.length === 0 ? <p className="text-xs text-muted">No nodes linked.</p> : null}
+                      </div>
+                      <form action={addBlockNodeLinkAction} className="mt-2 flex gap-2">
+                        <input type="hidden" name="csrf" value={csrf} />
+                        <input type="hidden" name="blockId" value={block.id} />
+                        <select name="nodeId" className="min-w-0 flex-1 border border-line bg-white px-2 py-1.5 text-xs text-ink">
+                          {addableNodes.map((node) => <option key={node.id} value={node.id}>{node.name} · {node.type}</option>)}
+                        </select>
+                        <button type="submit" disabled={addableNodes.length === 0} className="border border-line px-2 py-1.5 text-xs text-muted hover:border-ink hover:text-ink disabled:opacity-40">Link</button>
+                      </form>
+                      <form action={addOrCreateBlockNodeLinkAction} className="mt-2 space-y-2 border border-line p-2">
+                        <input type="hidden" name="csrf" value={csrf} />
+                        <input type="hidden" name="blockId" value={block.id} />
+                        <input name="nodeName" placeholder="New or existing node name" className="w-full border border-line px-2 py-1.5 text-xs text-ink outline-none focus:border-ink" />
+                        <div className="flex gap-2">
+                          <select name="nodeType" defaultValue="Concept" className="border border-line bg-white px-2 py-1.5 text-xs text-ink">
+                            {(["Concept", "Project", "Technology", "Person", "Work", "Question", "Aesthetic"] as const).map((type) => <option key={type} value={type}>{type}</option>)}
+                          </select>
+                          <input name="nodeDescription" placeholder="Optional description" className="min-w-0 flex-1 border border-line px-2 py-1.5 text-xs text-ink outline-none focus:border-ink" />
+                        </div>
+                        <button type="submit" className="border border-line px-2 py-1.5 text-xs text-muted hover:border-ink hover:text-ink">Create / link node</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 border-t border-line pt-4">
                   <p className="mb-3 text-xs uppercase tracking-wide text-muted">Processing actions</p>
                   <div className="flex flex-wrap gap-2">
                     <form action={reprocessBlockWithAiAction}>
@@ -181,7 +254,7 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
             </div>
             <div className="border border-line p-4">
               <p className="mb-3 text-xs uppercase tracking-wide text-muted">Connected nodes</p>
-              <NodeChips block={block} nodes={nodes} />
+              <NodeChips block={block} nodes={nodes} topics={topics} />
             </div>
             <div className="border border-line p-4">
               <p className="mb-3 text-xs uppercase tracking-wide text-muted">Reference</p>

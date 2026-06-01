@@ -70,6 +70,64 @@ export async function toggleBlockPinAction(formData: FormData) {
   redirect(next.startsWith("/") ? next : "/");
 }
 
+function revalidateBlockCuration(id: string) {
+  for (const path of ["/", `/blocks/${id}`, "/topics", "/nodes", "/graph", "/search"]) revalidatePath(path);
+}
+
+export async function addBlockTopicLinkAction(formData: FormData) {
+  await requireAuthAndCsrf(formData, "/login");
+  const blockId = String(formData.get("blockId") ?? "");
+  const topicId = String(formData.get("topicId") ?? "");
+  if (!blockId || !topicId) redirect(blockId ? `/blocks/${blockId}` : "/");
+  await libraryStore.addBlockTopicLink(blockId, topicId);
+  revalidateBlockCuration(blockId);
+  redirect(`/blocks/${blockId}`);
+}
+
+export async function removeBlockTopicLinkAction(formData: FormData) {
+  await requireAuthAndCsrf(formData, "/login");
+  const blockId = String(formData.get("blockId") ?? "");
+  const topicId = String(formData.get("topicId") ?? "");
+  if (!blockId || !topicId) redirect(blockId ? `/blocks/${blockId}` : "/");
+  await libraryStore.removeBlockTopicLink(blockId, topicId);
+  revalidateBlockCuration(blockId);
+  redirect(`/blocks/${blockId}`);
+}
+
+export async function addBlockNodeLinkAction(formData: FormData) {
+  await requireAuthAndCsrf(formData, "/login");
+  const blockId = String(formData.get("blockId") ?? "");
+  const nodeId = String(formData.get("nodeId") ?? "");
+  if (!blockId || !nodeId) redirect(blockId ? `/blocks/${blockId}` : "/");
+  await libraryStore.addBlockNodeLink(blockId, nodeId);
+  revalidateBlockCuration(blockId);
+  redirect(`/blocks/${blockId}`);
+}
+
+export async function addOrCreateBlockNodeLinkAction(formData: FormData) {
+  await requireAuthAndCsrf(formData, "/login");
+  const blockId = String(formData.get("blockId") ?? "");
+  const name = String(formData.get("nodeName") ?? "").trim();
+  if (!blockId || !name) redirect(blockId ? `/blocks/${blockId}` : "/");
+  await libraryStore.addOrCreateBlockNodeLink(blockId, {
+    name,
+    type: String(formData.get("nodeType") ?? "Concept"),
+    description: String(formData.get("nodeDescription") ?? ""),
+  });
+  revalidateBlockCuration(blockId);
+  redirect(`/blocks/${blockId}`);
+}
+
+export async function removeBlockNodeLinkAction(formData: FormData) {
+  await requireAuthAndCsrf(formData, "/login");
+  const blockId = String(formData.get("blockId") ?? "");
+  const nodeId = String(formData.get("nodeId") ?? "");
+  if (!blockId || !nodeId) redirect(blockId ? `/blocks/${blockId}` : "/");
+  await libraryStore.removeBlockNodeLink(blockId, nodeId);
+  revalidateBlockCuration(blockId);
+  redirect(`/blocks/${blockId}`);
+}
+
 export async function loginAction(formData: FormData) {
   const username = String(formData.get("username") ?? "").trim();
   const password = String(formData.get("password") ?? "");
