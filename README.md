@@ -14,23 +14,23 @@ Demo: https://folium.fyi/
 
 ### Library
 
-![Folium visual library](docs/screenshots/library-20260601-2.png)
+![Folium visual library](docs/screenshots/library-20260601-3.png)
 
 ### Block detail
 
-![Folium block detail](docs/screenshots/block-detail-20260601-2.png)
+![Folium block detail](docs/screenshots/block-detail-20260601-3.png)
 
 ### Topics and nodes
 
-![Folium topics](docs/screenshots/topics-20260601-2.png)
+![Folium topics](docs/screenshots/topics-20260601-3.png)
 
 ### Graph
 
-![Folium graph](docs/screenshots/graph-20260601-2.png)
+![Folium graph](docs/screenshots/graph-20260601-3.png)
 
 ### Search
 
-![Folium search](docs/screenshots/search-20260601-2.png)
+![Folium search](docs/screenshots/search-20260601-3.png)
 
 ## Features
 
