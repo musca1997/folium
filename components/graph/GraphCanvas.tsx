@@ -71,13 +71,22 @@ export function GraphCanvas({ width, height, nodes, edges }: GraphCanvasProps) {
   const byId = useMemo(() => new Map(visibleNodes.map((node) => [node.id, node])), [visibleNodes]);
   const connectedIds = useMemo(() => {
     if (!hoveredId) return null;
+    const hovered = byId.get(hoveredId);
     const ids = new Set([hoveredId]);
     for (const edge of visibleEdges) {
       if (edge.from === hoveredId) ids.add(edge.to);
       if (edge.to === hoveredId) ids.add(edge.from);
     }
+    if (hovered?.kind === "topic") {
+      const blockIds = new Set([...ids].filter((id) => byId.get(id)?.kind === "block"));
+      for (const edge of visibleEdges) {
+        if (edge.kind !== "block_node") continue;
+        if (blockIds.has(edge.from)) ids.add(edge.to);
+        if (blockIds.has(edge.to)) ids.add(edge.from);
+      }
+    }
     return ids;
-  }, [hoveredId, visibleEdges]);
+  }, [byId, hoveredId, visibleEdges]);
 
   function zoom(delta: number) { setScale((value) => Math.min(2.4, Math.max(0.35, Number((value + delta).toFixed(2))))); }
   function reset() { setScale(0.72); setPan({ x: 0, y: 0 }); setFocusedTopicId("all"); setHoveredId(null); }
@@ -110,7 +119,7 @@ export function GraphCanvas({ width, height, nodes, edges }: GraphCanvasProps) {
             {showLabels ? "Hide extra labels" : "Show extra labels"}
           </button>
         </div>
-        <p>Clustered layout · hover to focus · scroll to zoom · drag empty space to pan</p>
+        <p>Clustered layout · hover a topic to reveal its nodes · scroll to zoom · drag empty space to pan</p>
       </div>
 
       <div
@@ -133,7 +142,7 @@ export function GraphCanvas({ width, height, nodes, edges }: GraphCanvasProps) {
             {visibleNodes.map((node) => {
               const labelFill = node.kind === "block" ? "#777777" : node.kind === "wiki_node" ? "#444444" : "#111111";
               const labelSize = node.kind === "root" ? 18 : node.kind === "topic" ? 14 : node.kind === "wiki_node" ? 11 : 10;
-              const shouldShowLabel = node.kind === "root" || node.kind === "topic" || hoveredId === node.id || (showLabels && node.kind !== "block");
+              const shouldShowLabel = node.kind === "root" || node.kind === "topic" || hoveredId === node.id || (connectedIds?.has(node.id) && node.kind === "wiki_node") || (showLabels && node.kind !== "block");
               const dimmed = isDimmed(node.id);
               const circle = <circle cx={node.x} cy={node.y} r={node.r} fill={nodeFill(node)} stroke={nodeStroke(node)} strokeWidth={node.kind === "topic" ? 1.4 : 1} opacity={dimmed ? 0.18 : 1} onPointerEnter={() => setHoveredId(node.id)} className="transition-opacity hover:opacity-70" />;
               return (
