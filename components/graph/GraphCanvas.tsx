@@ -88,6 +88,8 @@ export function GraphCanvas({ width, height, nodes, edges }: GraphCanvasProps) {
     return ids;
   }, [byId, hoveredId, visibleEdges]);
 
+  const hoveredNode = hoveredId ? byId.get(hoveredId) : null;
+
   function zoom(delta: number) { setScale((value) => Math.min(2.4, Math.max(0.35, Number((value + delta).toFixed(2))))); }
   function reset() { setScale(0.72); setPan({ x: 0, y: 0 }); setFocusedTopicId("all"); setHoveredId(null); }
   function isDimmed(id: string) { return connectedIds ? !connectedIds.has(id) : false; }
@@ -142,7 +144,7 @@ export function GraphCanvas({ width, height, nodes, edges }: GraphCanvasProps) {
             {visibleNodes.map((node) => {
               const labelFill = node.kind === "block" ? "#777777" : node.kind === "wiki_node" ? "#444444" : "#111111";
               const labelSize = node.kind === "root" ? 18 : node.kind === "topic" ? 14 : node.kind === "wiki_node" ? 11 : 10;
-              const shouldShowLabel = node.kind === "root" || node.kind === "topic" || hoveredId === node.id || (connectedIds?.has(node.id) && node.kind === "wiki_node") || (showLabels && node.kind !== "block");
+              const shouldShowLabel = node.kind === "root" || node.kind === "topic" || hoveredId === node.id || (connectedIds?.has(node.id) && (node.kind === "wiki_node" || (hoveredNode?.kind === "topic" && node.kind === "block"))) || (showLabels && node.kind !== "block");
               const dimmed = isDimmed(node.id);
               const circle = <circle cx={node.x} cy={node.y} r={node.r} fill={nodeFill(node)} stroke={nodeStroke(node)} strokeWidth={node.kind === "topic" ? 1.4 : 1} opacity={dimmed ? 0.18 : 1} onPointerEnter={() => setHoveredId(node.id)} className="transition-opacity hover:opacity-70" />;
               return (
