@@ -39,6 +39,7 @@ function withCuration<T extends { curation?: CurationState }>(item: T): T & { cu
 function normalizeBlock(block: Block): Block {
   return withCuration({
     ...block,
+    summaryTranslations: block.summaryTranslations ?? {},
     visibility: block.visibility ?? "private",
     nodeLinks: (block.nodeLinks ?? []).map((link) => ({ ...link, claims: link.claims ?? [], evidence: link.evidence ?? [] })),
     topicLinks: (block.topicLinks ?? []).map((link) => ({ ...link, claims: link.claims ?? [], evidence: link.evidence ?? [] })),
@@ -312,12 +313,13 @@ export function createLibraryStore(options: StoreOptions = {}) {
       return { nodes: graphNodes, edges };
     },
 
-    async updateBlock(id: string, patch: Partial<Pick<Block, "title" | "summary" | "description" | "visibility">>): Promise<Block> {
+    async updateBlock(id: string, patch: Partial<Pick<Block, "title" | "summary" | "summaryTranslations" | "description" | "visibility">>): Promise<Block> {
       return updateData((data) => {
         const block = data.blocks.find((item) => item.id === id);
         if (!block) throw new Error(`Block not found: ${id}`);
         if (patch.title !== undefined) block.title = patch.title.trim() || block.domain;
         if (patch.summary !== undefined) block.summary = patch.summary.trim();
+        if (patch.summaryTranslations !== undefined) block.summaryTranslations = { ...(block.summaryTranslations ?? {}), zh: patch.summaryTranslations.zh?.trim() || undefined };
         if (patch.description !== undefined) block.description = patch.description.trim();
         if (patch.visibility === "public" || patch.visibility === "private") block.visibility = patch.visibility;
         block.updatedAt = nowIso();
@@ -515,7 +517,7 @@ export function createLibraryStore(options: StoreOptions = {}) {
       const existingTopics = data.topics.map((topic) => ({ name: topic.name, description: topic.description }));
       const existingNodes = data.nodes.map((node) => ({ name: node.name, type: node.type, description: node.description }));
       const analysis = await analyzeUrl(block.url, { title: block.title, description: block.description, textContent: block.contentText, existingTopics, existingNodes });
-      const timestamp = nowIso(); block.title = block.title || block.domain; block.summary = analysis.summary; block.status = "indexed"; block.metadata = { ...block.metadata, provider: await getAnalysisProviderName() }; block.nodeLinks = []; block.topicLinks = []; block.updatedAt = timestamp;
+      const timestamp = nowIso(); block.title = block.title || block.domain; block.summary = analysis.summary; block.summaryTranslations = analysis.summaryTranslations ?? {}; block.status = "indexed"; block.metadata = { ...block.metadata, provider: await getAnalysisProviderName() }; block.nodeLinks = []; block.topicLinks = []; block.updatedAt = timestamp;
 
       for (const generated of analysis.topics) {
         const canonical = await reconcileTopicName(generated.name, data.topics);

@@ -15,7 +15,8 @@ describe("buildAnalysisPrompt", () => {
     });
 
     expect(prompt).toContain("Return only JSON");
-    expect(prompt).toContain("summary");
+    expect(prompt).toContain('"summary": "one or two concise English sentences"');
+    expect(prompt).toContain('"summaryZh": "one or two concise Simplified Chinese sentences"');
     expect(prompt).toContain("nodes");
     expect(prompt).toContain("Canonical topics:");
     expect(prompt).toContain("Library of Congress");

@@ -31,6 +31,10 @@ export type BlockTopicLink = {
   claims?: string[];
 };
 
+export type SummaryTranslations = {
+  zh?: string;
+};
+
 export type Block = {
   id: string;
   type: "url";
@@ -38,6 +42,7 @@ export type Block = {
   domain: string;
   title: string;
   summary: string;
+  summaryTranslations?: SummaryTranslations;
   contentText: string;
   contentHtml: string;
   status: BlockStatus;

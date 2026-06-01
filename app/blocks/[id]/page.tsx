@@ -6,6 +6,7 @@ import { NodeChips } from "@/components/NodeChips";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { EvidenceList } from "@/components/EvidenceList";
 import { ProcessingTimeline } from "@/components/ProcessingTimeline";
+import { SummaryToggle } from "@/components/SummaryToggle";
 import { deleteBlockAction, recaptureBlockAction, reprocessBlockWithAiAction, retryBlockProcessingAction, setManualContentAction, toggleBlockPinAction, updateBlockAction } from "@/app/actions";
 import { getCsrfToken, isAuthenticated } from "@/lib/auth";
 import { libraryStore } from "@/lib/store/library";
@@ -31,7 +32,8 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
       <Header />
       <AutoRefresh active={block.status !== "indexed" && block.status !== "failed"} />
       <main className="mx-auto max-w-6xl px-5 py-6">
-        <PageIntro eyebrow="Saved reference" title={block.title} description={block.summary || block.description || `A page saved from ${block.domain}.`} />
+        <PageIntro eyebrow="Saved reference" title={block.title} description={undefined} />
+        <SummaryToggle summary={block.summary} summaryZh={block.summaryTranslations?.zh} fallback={block.description || `A page saved from ${block.domain}.`} />
         <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_320px]">
           <section>
             <div className="flex aspect-video items-center justify-center overflow-hidden border border-line bg-soft text-sm text-muted">
@@ -91,8 +93,12 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
                     <input name="title" defaultValue={block.title} className="mt-1 w-full border border-line px-2 py-1.5 text-sm text-ink outline-none focus:border-ink" />
                   </label>
                   <label className="block text-xs text-muted">
-                    Summary
+                    Summary · English
                     <textarea name="summary" defaultValue={block.summary} rows={4} className="mt-1 w-full resize-y border border-line px-2 py-1.5 text-sm text-ink outline-none focus:border-ink" />
+                  </label>
+                  <label className="block text-xs text-muted">
+                    Summary · 中文
+                    <textarea name="summaryZh" defaultValue={block.summaryTranslations?.zh ?? ""} rows={4} className="mt-1 w-full resize-y border border-line px-2 py-1.5 text-sm text-ink outline-none focus:border-ink" />
                   </label>
                   <label className="block text-xs text-muted">
                     Description

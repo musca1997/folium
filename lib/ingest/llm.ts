@@ -24,6 +24,7 @@ const RawTopicSchema = z.object({
 
 const RawAnalysisSchema = z.object({
   summary: z.string().default(""),
+  summaryZh: z.string().optional().default(""),
   topics: z.array(RawTopicSchema).default([]),
   nodes: z.array(RawNodeSchema).default([]),
 });
@@ -33,6 +34,9 @@ export type LlmTopicAnalysis = z.infer<typeof RawTopicSchema>;
 
 export type LlmAnalysis = {
   summary: string;
+  summaryTranslations?: {
+    zh?: string;
+  };
   topics: LlmTopicAnalysis[];
   nodes: LlmNodeAnalysis[];
 };
@@ -81,6 +85,7 @@ export function parseLlmAnalysis(raw: string): LlmAnalysis {
   const parsed = RawAnalysisSchema.parse(JSON.parse(raw));
   return {
     summary: parsed.summary,
+    summaryTranslations: parsed.summaryZh.trim() ? { zh: parsed.summaryZh.trim() } : undefined,
     topics: parsed.topics
       .filter((topic) => topic.confidence >= 0.35 && topic.confidence <= 1)
       .sort((a, b) => b.confidence - a.confidence)

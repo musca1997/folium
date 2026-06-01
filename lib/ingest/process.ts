@@ -29,7 +29,8 @@ Analyze this saved web reference and classify it into Library of Congress Classi
 Return only JSON. Do not wrap it in markdown. Do not add commentary.
 The JSON shape must be:
 {
-  "summary": "one or two concise sentences",
+  "summary": "one or two concise English sentences",
+  "summaryZh": "one or two concise Simplified Chinese sentences",
   "topics": [
     {
       "name": "one exact canonical Library of Congress class name from the allowed list below, e.g. Science, Technology, Music, Fine Arts",
@@ -97,6 +98,7 @@ export function fallbackAnalysisForUrl(url: string, context: AnalyzeContext = {}
       context.description ||
       context.textContent?.slice(0, 220) ||
       `Saved reference from ${domain}. Add an API key later to replace this with an LLM-written summary.`,
+    summaryTranslations: {},
     topics: [
       {
         name: "Web Curation",
@@ -218,7 +220,7 @@ function ensureDomainNodeCoverage(analysis: LlmAnalysis, matched: ReturnType<typ
 }
 
 export function ensureDomainTopicCoverage(url: string, context: AnalyzeContext, analysis: LlmAnalysis): LlmAnalysis {
-  const next: LlmAnalysis = { ...analysis, topics: [...analysis.topics] };
+  const next: LlmAnalysis = { ...analysis, topics: [...analysis.topics], nodes: [...analysis.nodes] };
   const matched = classifyTextToLccTopic(context, next);
   const withNodes = ensureDomainNodeCoverage(next, matched);
   next.nodes = withNodes.nodes;

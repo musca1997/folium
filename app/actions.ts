@@ -43,6 +43,7 @@ export async function updateBlockAction(formData: FormData) {
   await libraryStore.updateBlock(id, {
     title: String(formData.get("title") ?? ""),
     summary: String(formData.get("summary") ?? ""),
+    summaryTranslations: { zh: String(formData.get("summaryZh") ?? "") },
     description: String(formData.get("description") ?? ""),
     visibility: formData.get("visibility") === "public" ? "public" : "private",
   });

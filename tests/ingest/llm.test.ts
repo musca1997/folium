@@ -18,6 +18,7 @@ describe("parseLlmAnalysis", () => {
     );
 
     expect(result.summary).toBe("A short summary.");
+    expect(result.summaryTranslations?.zh).toBeUndefined();
     expect(result.nodes).toHaveLength(1);
     expect(result.nodes[0]?.name).toBe("Digital Garden");
   });
@@ -55,4 +56,16 @@ it("parses optional claims and evidence while preserving old JSON compatibility"
   }));
   expect(result.nodes[0]?.claims).toEqual(["It is related.", "Two", "Three"]);
   expect(result.nodes[0]?.evidence[0]?.quote).toHaveLength(280);
+});
+
+it("parses bilingual summaries from analysis JSON", () => {
+  const result = parseLlmAnalysis(JSON.stringify({
+    summary: "An English summary.",
+    summaryZh: "一段中文摘要。",
+    nodes: [],
+    topics: [],
+  }));
+
+  expect(result.summary).toBe("An English summary.");
+  expect(result.summaryTranslations?.zh).toBe("一段中文摘要。");
 });
