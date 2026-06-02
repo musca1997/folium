@@ -76,6 +76,9 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             <Link href="/add" className="border border-ink px-3 py-2 hover:bg-ink hover:text-white">
               Save a link
             </Link>
+            <Link href="/serendipity" title="Open a random saved block" aria-label="Open a random saved block" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">
+              Serendipity
+            </Link>
             {processingCount > 0 ? (
               <Link href="/processing" className="border border-line px-3 py-2 text-muted hover:border-ink hover:text-ink">
                 {processingCount} processing
