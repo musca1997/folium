@@ -96,10 +96,23 @@ export function lccTopicEvidenceText(context: { title?: string; description?: st
   ].join(" ").toLowerCase();
 }
 
-export function classifyTextToLccTopic(context: { title?: string; description?: string; textContent?: string }, analysis?: LlmAnalysis): { topic: LccCanonicalTopic; rule: LccDomainRule } | null {
+export function classifyTextToLccTopics(context: { title?: string; description?: string; textContent?: string }, analysis?: LlmAnalysis, limit = 2): Array<{ topic: LccCanonicalTopic; rule: LccDomainRule }> {
   const haystack = lccTopicEvidenceText(context, analysis);
-  const rule = lccDomainRules.find((candidate) => candidate.patterns.filter((pattern) => pattern.test(haystack)).length >= (candidate.minMatches ?? 1));
-  return rule ? { topic: lccTopicByCode(rule.code), rule } : null;
+  const seen = new Set<LccClassCode>();
+  const matches: Array<{ topic: LccCanonicalTopic; rule: LccDomainRule }> = [];
+  for (const rule of lccDomainRules) {
+    if (seen.has(rule.code)) continue;
+    const matchedPatternCount = rule.patterns.filter((pattern) => pattern.test(haystack)).length;
+    if (matchedPatternCount < (rule.minMatches ?? 1)) continue;
+    seen.add(rule.code);
+    matches.push({ topic: lccTopicByCode(rule.code), rule });
+    if (matches.length >= limit) break;
+  }
+  return matches;
+}
+
+export function classifyTextToLccTopic(context: { title?: string; description?: string; textContent?: string }, analysis?: LlmAnalysis): { topic: LccCanonicalTopic; rule: LccDomainRule } | null {
+  return classifyTextToLccTopics(context, analysis, 1)[0] ?? null;
 }
 
 export function toLccTopicAnalysis(match: { topic: LccCanonicalTopic; rule?: LccDomainRule }): LlmAnalysis["topics"][number] {

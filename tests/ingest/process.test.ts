@@ -97,6 +97,22 @@ describe("ensureDomainTopicCoverage", () => {
     expect(result.nodes.map((node) => node.name)).toContain("AI and Machine Learning");
   });
 
+  it("keeps both science and technology when a software project has AI research signals", () => {
+    const result = ensureDomainTopicCoverage("https://github.com/study8677/awesome-architecture", {
+      title: "GitHub - study8677/awesome-architecture: software architect maps for AI gateway, RAG, agents, inference serving, vector DB",
+      description: "A GitHub repository with open-source software architecture templates and AI system designs.",
+      textContent: "github repository open source software architecture framework developer tools RAG agents inference serving vector database",
+    }, {
+      summary: "A repository of software architecture maps for AI systems.",
+      topics: [{ name: "Web Curation", description: "Saved web references.", confidence: 0.7, claims: [], evidence: [] }],
+      nodes: [{ type: "Project", name: "awesome-architecture", description: "Architecture map repository.", relevance: 0.9, claims: [], evidence: [] }],
+    });
+
+    expect(result.topics.map((topic) => topic.name)).toEqual(["Science", "Technology"]);
+    expect(result.nodes.map((node) => node.name)).toContain("AI and Machine Learning");
+    expect(result.nodes.map((node) => node.name)).toContain("Software Development");
+  });
+
   it("promotes wireless communication for LoRa mesh communities", () => {
     const result = ensureDomainTopicCoverage("https://meshcn.net", {
       title: "MeshCN - Meshtastic 中国社区",

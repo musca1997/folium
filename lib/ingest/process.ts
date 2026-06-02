@@ -1,7 +1,7 @@
 import { getAiSettings } from "@/lib/settings";
 import { parseLlmAnalysis, type LlmAnalysis } from "./llm";
 import { getDomain, slugifyNodeName } from "./url";
-import { classifyTextToLccTopic, lccCanonicalTopics, lccTopicCatalogForPrompt, toLccTopicAnalysis } from "@/lib/taxonomy/lcc";
+import { classifyTextToLccTopic, classifyTextToLccTopics, lccCanonicalTopics, lccTopicCatalogForPrompt, toLccTopicAnalysis } from "@/lib/taxonomy/lcc";
 
 type AnalyzeContext = {
   title?: string;
@@ -221,17 +221,20 @@ function ensureDomainNodeCoverage(analysis: LlmAnalysis, matched: ReturnType<typ
 
 export function ensureDomainTopicCoverage(url: string, context: AnalyzeContext, analysis: LlmAnalysis): LlmAnalysis {
   const next: LlmAnalysis = { ...analysis, topics: [...analysis.topics], nodes: [...analysis.nodes] };
-  const matched = classifyTextToLccTopic(context, next);
-  const withNodes = ensureDomainNodeCoverage(next, matched);
-  next.nodes = withNodes.nodes;
-  if (matched && !hasTopic(next, matched.topic.name)) {
-    const domainTopic = {
-      ...toLccTopicAnalysis(matched),
+  const matches = classifyTextToLccTopics(context, next, 2);
+  for (const match of matches) {
+    const withNodes = ensureDomainNodeCoverage(next, match);
+    next.nodes = withNodes.nodes;
+  }
+  if (matches.length > 0) {
+    const domainTopics = matches.map((match) => ({
+      ...toLccTopicAnalysis(match),
       evidence: context.title ? [{ quote: context.title.slice(0, 280), source: "title" as const }] : [],
-    };
-    const nonDuplicate = next.topics.filter((topic) => topic.name.toLowerCase() !== matched.topic.name.toLowerCase());
+    }));
+    const matchedTopicNames = new Set(domainTopics.map((topic) => topic.name.toLowerCase()));
+    const nonDuplicate = next.topics.filter((topic) => !matchedTopicNames.has(topic.name.toLowerCase()));
     const highValueExisting = nonDuplicate.filter((topic) => isLccTopic(topic.name) && (!isContainerTopic(topic.name) || topic.confidence >= 0.75));
-    next.topics = [domainTopic, ...highValueExisting].slice(0, 2);
+    next.topics = [...domainTopics, ...highValueExisting].slice(0, 2);
   }
   next.topics = next.topics.filter((topic) => isLccTopic(topic.name)).slice(0, 2);
   if (next.topics.length > 0) return next;
