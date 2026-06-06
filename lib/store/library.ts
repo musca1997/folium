@@ -12,6 +12,7 @@ import type { Block, BlockNodeLink, BlockTopicLink, BlockVisibility, CurationSta
 
 type StoreOptions = { dataDir?: string; enableNetwork?: boolean; staleJobTimeoutMs?: number; maxJobAttempts?: number };
 type AddUrlBlockResult = { block: Block; created: boolean; duplicate: boolean };
+export type RelatedBlock = { block: Block; score: number; reasons: string[] };
 type ProvidedContentInput = {
   title?: string;
   description?: string;
@@ -75,6 +76,126 @@ function mergeEvidence<T extends { source: string; quote: string }>(items: T[] =
 function mergeClaims(items: string[] = []): string[] { return Array.from(new Set(items.map((item) => item.trim()).filter(Boolean))).slice(0, 6); }
 function mergeTopicLinks(existing: BlockTopicLink, incoming: BlockTopicLink): BlockTopicLink { return { ...existing, confidence: Math.max(existing.confidence, incoming.confidence), reason: existing.reason || incoming.reason, claims: mergeClaims([...(existing.claims ?? []), ...(incoming.claims ?? [])]), evidence: mergeEvidence([...(existing.evidence ?? []), ...(incoming.evidence ?? [])]) }; }
 function mergeNodeLinks(existing: BlockNodeLink, incoming: BlockNodeLink): BlockNodeLink { return { ...existing, relevance: Math.max(existing.relevance, incoming.relevance), reason: existing.reason || incoming.reason, claims: mergeClaims([...(existing.claims ?? []), ...(incoming.claims ?? [])]), evidence: mergeEvidence([...(existing.evidence ?? []), ...(incoming.evidence ?? [])]) }; }
+const relatedKeywordStopwords = new Set([
+  "about", "after", "again", "also", "because", "before", "being", "between", "could", "every", "from", "have", "into", "more", "most", "only", "other", "over", "page", "pages", "than", "that", "their", "then", "there", "these", "this", "those", "through", "under", "using", "very", "were", "what", "when", "where", "which", "while", "with", "would", "your", "and", "for", "can", "com", "www", "http", "https", "includes", "reference", "overview", "guide", "tools", "tool", "open", "source", "open-source", "github", "example", "desktop", "desktops", "window", "windows", "linux", "macos", "train", "evaluate", "infrastructure", "see", "question", "post", "posts", "status", "statu", "new", "view", "keyboard", "shortcut", "shortcuts", "press", "creator", "home", "explore", "notifications", "chat", "grok", "bookmarks", "profile", "premium", "conversation", "article",
+]);
+const genericRelatedTopicNames = new Set(["technology", "bibliography, library science, information resources", "science", "education"]);
+const genericRelatedNodeNames = new Set(["archives and databases", "web reference", "self-hosting", "web curation"]);
+
+function isSourceLikeNode(node: WikiNode | undefined): boolean {
+  return !node ? false : node.type === "Source" || /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(node.name);
+}
+
+function relatedText(block: Block): string {
+  return [block.title, block.summary, block.description, block.url].filter(Boolean).join(" ");
+}
+
+function normalizeRelatedKeyword(token: string): string {
+  let normalized = token.toLowerCase().replace(/^[\'-]+|[\'-]+$/g, "");
+  if (normalized.length > 4 && normalized.endsWith("ies")) normalized = `${normalized.slice(0, -3)}y`;
+  else if (normalized.length > 4 && normalized.endsWith("es")) normalized = normalized.slice(0, -2);
+  else if (normalized.length > 3 && normalized.endsWith("s")) normalized = normalized.slice(0, -1);
+  return normalized;
+}
+
+function keywordsFromText(text: string): Set<string> {
+  const tokens = text.toLowerCase().match(/[\p{L}\p{N}][\p{L}\p{N}'-]{2,}/gu) ?? [];
+  return new Set(tokens.map(normalizeRelatedKeyword).filter((token) => token.length >= 3 && !relatedKeywordStopwords.has(token) && !/^\d+$/.test(token)));
+}
+
+function relatedKeywords(block: Block): Set<string> {
+  return keywordsFromText(relatedText(block));
+}
+
+function relatedTitleKeywords(block: Block): Set<string> {
+  return keywordsFromText(block.title);
+}
+
+function rarityWeight(total: number, count: number): number {
+  return Math.log((total + 1) / Math.max(count, 1));
+}
+
+function countIds(items: Iterable<string>): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const item of items) counts.set(item, (counts.get(item) ?? 0) + 1);
+  return counts;
+}
+
+function relatedBlocksFor(target: Block, candidates: Block[], topics: Topic[], nodes: WikiNode[], limit = 5): RelatedBlock[] {
+  const topicNames = new Map(topics.map((topic) => [topic.id, topic.name]));
+  const nodeNames = new Map(nodes.map((node) => [node.id, node.name]));
+  const nodesById = new Map(nodes.map((node) => [node.id, node]));
+  const targetTopicIds = new Set(target.topicLinks.map((link) => link.topicId));
+  const targetNodeIds = new Set(target.nodeLinks.map((link) => link.nodeId));
+  const indexedBlocks = candidates;
+  const totalBlocks = Math.max(indexedBlocks.length, 1);
+  const topicCounts = countIds(indexedBlocks.flatMap((block) => Array.from(new Set(block.topicLinks.map((link) => link.topicId)))));
+  const nodeCounts = countIds(indexedBlocks.flatMap((block) => Array.from(new Set(block.nodeLinks.map((link) => link.nodeId)))));
+  const keywordSets = new Map(indexedBlocks.map((block) => [block.id, relatedKeywords(block)]));
+  const titleKeywordSets = new Map(indexedBlocks.map((block) => [block.id, relatedTitleKeywords(block)]));
+  const keywordCounts = countIds(Array.from(keywordSets.values()).flatMap((keywords) => Array.from(keywords)));
+  const targetKeywords = keywordSets.get(target.id) ?? relatedKeywords(target);
+  const targetTitleKeywords = titleKeywordSets.get(target.id) ?? relatedTitleKeywords(target);
+
+  return candidates
+    .filter((candidate) => candidate.id !== target.id)
+    .map((candidate) => {
+      let score = 0;
+      const nodeReasons: { label: string; weight: number }[] = [];
+      const topicReasons: { label: string; weight: number }[] = [];
+      const keywordReasons: { label: string; weight: number }[] = [];
+
+      for (const link of candidate.nodeLinks) {
+        if (!targetNodeIds.has(link.nodeId)) continue;
+        const node = nodesById.get(link.nodeId);
+        const name = node?.name;
+        if (!name || isSourceLikeNode(node) || genericRelatedNodeNames.has(name.toLowerCase())) continue;
+        const count = nodeCounts.get(link.nodeId) ?? 1;
+        const weight = rarityWeight(totalBlocks, count);
+        if ((totalBlocks >= 20 && count / totalBlocks > 0.18) || weight <= 0.5) continue;
+        score += 4 * weight;
+        nodeReasons.push({ label: name, weight });
+      }
+      for (const link of candidate.topicLinks) {
+        if (!targetTopicIds.has(link.topicId)) continue;
+        const name = topicNames.get(link.topicId);
+        if (!name || genericRelatedTopicNames.has(name.toLowerCase())) continue;
+        const count = topicCounts.get(link.topicId) ?? 1;
+        const weight = rarityWeight(totalBlocks, count);
+        if ((totalBlocks >= 20 && count / totalBlocks > 0.18) || weight <= 0.5) continue;
+        score += 2.5 * weight;
+        topicReasons.push({ label: name, weight });
+      }
+
+      const candidateKeywords = keywordSets.get(candidate.id) ?? relatedKeywords(candidate);
+      const sharedKeywords = Array.from(candidateKeywords).filter((keyword) => targetKeywords.has(keyword));
+      for (const keyword of sharedKeywords) {
+        const weight = rarityWeight(totalBlocks, keywordCounts.get(keyword) ?? 1);
+        if (weight <= 0.25) continue;
+        keywordReasons.push({ label: `keyword: ${keyword}`, weight });
+      }
+      keywordReasons.sort((a, b) => b.weight - a.weight || a.label.localeCompare(b.label));
+      const keywordScore = keywordReasons.slice(0, 8).reduce((sum, item) => sum + item.weight, 0);
+      const candidateTitleKeywords = titleKeywordSets.get(candidate.id) ?? relatedTitleKeywords(candidate);
+      const sharedTitleKeywords = Array.from(candidateTitleKeywords).filter((keyword) => targetTitleKeywords.has(keyword));
+      const titleKeywordFallback = sharedTitleKeywords.length >= 2;
+      const semanticOverlap = nodeReasons.length > 0 || topicReasons.length > 0;
+      const qualifies = semanticOverlap || titleKeywordFallback;
+      if (qualifies) score += Math.min(keywordScore * (semanticOverlap ? 0.6 : 1.0), semanticOverlap ? 4 : 8);
+      if (qualifies && candidate.domain === target.domain) score += 0.25;
+
+      const reasons = [
+        ...nodeReasons.sort((a, b) => b.weight - a.weight || a.label.localeCompare(b.label)).map((item) => item.label),
+        ...topicReasons.sort((a, b) => b.weight - a.weight || a.label.localeCompare(b.label)).map((item) => item.label),
+        ...keywordReasons.filter((item) => semanticOverlap || sharedTitleKeywords.includes(item.label.replace("keyword: ", ""))).slice(0, semanticOverlap ? 2 : 3).map((item) => item.label),
+        ...(qualifies && candidate.domain === target.domain ? ["same domain"] : []),
+      ].slice(0, 4);
+      return { block: candidate, score: qualifies ? score : 0, reasons };
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || b.block.updatedAt.localeCompare(a.block.updatedAt) || a.block.title.localeCompare(b.block.title))
+    .slice(0, limit);
+}
 
 export function createLibraryStore(options: StoreOptions = {}) {
   const dataDir = options.dataDir ?? join(process.cwd(), "data");
@@ -227,6 +348,18 @@ export function createLibraryStore(options: StoreOptions = {}) {
     async listPublicBlocks(): Promise<Block[]> { return publicBlocks(await readData()); },
     async getBlock(id: string): Promise<Block | null> { const data = await readData(); return data.blocks.find((block) => block.id === id) ?? null; },
     async getPublicBlock(id: string): Promise<Block | null> { const block = (await this.getBlock(id)); return block?.visibility === "public" ? block : null; },
+    async getRelatedBlocks(id: string, limit = 5): Promise<RelatedBlock[]> {
+      const data = await readData();
+      const block = visible(data.blocks).find((item) => item.id === id);
+      if (!block) return [];
+      return relatedBlocksFor(block, visible(data.blocks), visible(data.topics), visible(data.nodes), limit);
+    },
+    async getPublicRelatedBlocks(id: string, limit = 5): Promise<RelatedBlock[]> {
+      const data = await readData();
+      const block = publicBlocks(data).find((item) => item.id === id);
+      if (!block) return [];
+      return relatedBlocksFor(block, publicBlocks(data), publicTopics(data), publicNodes(data), limit);
+    },
     async listNodes(): Promise<WikiNode[]> { const data = await readData(); return visible(data.nodes).sort((a, b) => a.name.localeCompare(b.name)); },
     async listPublicNodes(): Promise<WikiNode[]> { return publicNodes(await readData()); },
     async listTopics(): Promise<Topic[]> { const data = await readData(); return visible(data.topics).sort((a, b) => a.name.localeCompare(b.name)); },

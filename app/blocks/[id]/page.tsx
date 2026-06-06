@@ -39,11 +39,12 @@ function getWaybackView(metadata: Record<string, unknown>): WaybackView {
 export default async function BlockPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const authed = await isAuthenticated();
-  const [block, nodes, topics, jobs, heartbeat, settings] = await Promise.all([
+  const [block, nodes, topics, jobs, relatedBlocks, heartbeat, settings] = await Promise.all([
     authed ? libraryStore.getBlock(id) : libraryStore.getPublicBlock(id),
     authed ? libraryStore.listNodes() : libraryStore.listPublicNodes(),
     authed ? libraryStore.listTopics() : libraryStore.listPublicTopics(),
     authed ? libraryStore.listJobs() : Promise.resolve([]),
+    authed ? libraryStore.getRelatedBlocks(id) : libraryStore.getPublicRelatedBlocks(id),
     getWorkerHeartbeat(),
     getSettings(),
   ]);
@@ -334,6 +335,20 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
                 </div>
               )}
             </div>
+            {relatedBlocks.length ? (
+              <div className="border border-line p-4 text-sm">
+                <p className="mb-3 text-xs uppercase tracking-wide text-muted">Related blocks</p>
+                <div className="space-y-4">
+                  {relatedBlocks.map(({ block: related, reasons }) => (
+                    <div key={related.id} className="border-t border-line pt-3 first:border-t-0 first:pt-0">
+                      <Link href={`/blocks/${related.id}`} className="block leading-snug underline">{related.title || related.url}</Link>
+                      <p className="mt-1 truncate text-xs text-muted">{related.domain}</p>
+                      {reasons.length ? <p className="mt-2 text-xs leading-relaxed text-muted">Related because: {reasons.join(", ")}</p> : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             <div className="border border-line p-4">
               <p className="mb-3 text-xs uppercase tracking-wide text-muted">Connected nodes</p>
               <NodeChips block={block} nodes={nodes} topics={topics} />
