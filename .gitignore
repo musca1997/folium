@@ -6,6 +6,8 @@ node_modules
 coverage
 .DS_Store
 tsconfig.tsbuildinfo
+packages/extension/*.xpi
+packages/extension/*source.zip
 
 # Local Folium state and secrets
 data/*.json

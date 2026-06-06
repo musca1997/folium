@@ -5,6 +5,7 @@ import { browserExtractPage } from "@/lib/ingest/browserExtract";
 import { detectVerificationBlock, fetchAndExtractPage } from "@/lib/ingest/extract";
 import { analyzeUrl, getAnalysisProviderName } from "@/lib/ingest/process";
 import { captureScreenshot, saveScreenshotDataUrl } from "@/lib/ingest/screenshot";
+import { checkWaybackAvailability, submitToWayback } from "@/lib/ingest/wayback";
 import { canonicalizeUrl, getDomain, getUrlDuplicateKey, normalizeUrl, slugifyNodeName } from "@/lib/ingest/url";
 import { reconcileNodeName, reconcileTopicName } from "@/lib/taxonomy/reconcile";
 import type { Block, BlockNodeLink, BlockTopicLink, BlockVisibility, CurationState, Job, LibraryData, NodeType, Topic, WikiNode } from "./types";
@@ -569,6 +570,7 @@ export function createLibraryStore(options: StoreOptions = {}) {
         }
         block.status = "screenshotting"; block.updatedAt = nowIso(); await writeData(data);
         const screenshot = await captureScreenshot(block.url, block.id); if (screenshot.path) block.screenshotPath = screenshot.path; if (screenshot.error) block.metadata = { ...block.metadata, screenshotError: screenshot.error }; else block.metadata = { ...block.metadata, screenshotError: undefined };
+        block.metadata = { ...block.metadata, wayback: await checkWaybackAvailability(block.url) };
       }
       if (typeof block.metadata.extractionBlockedReason === "string") block.status = "failed";
       block.updatedAt = nowIso(); await writeData(data); return block;
@@ -607,6 +609,19 @@ export function createLibraryStore(options: StoreOptions = {}) {
       const block = await this.extractAndCaptureBlock(id);
       const data = await readData(); const fresh = data.blocks.find((item) => item.id === id); if (!fresh) throw new Error(`Block not found: ${id}`);
       fresh.status = block.summary || fresh.nodeLinks.length || fresh.topicLinks.length ? "indexed" : "pending"; fresh.updatedAt = nowIso(); await writeData(data); return fresh;
+    },
+
+    async submitBlockToWayback(id: string): Promise<Block> {
+      const existing = await this.getBlock(id);
+      if (!existing) throw new Error(`Block not found: ${id}`);
+      const wayback = await submitToWayback(existing.url);
+      return updateData((data) => {
+        const block = data.blocks.find((item) => item.id === id);
+        if (!block) throw new Error(`Block not found: ${id}`);
+        block.metadata = { ...block.metadata, wayback };
+        block.updatedAt = nowIso();
+        return block;
+      });
     },
 
     async processBlock(id: string): Promise<Block> {

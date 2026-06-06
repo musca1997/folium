@@ -7,11 +7,34 @@ import { AutoRefresh } from "@/components/AutoRefresh";
 import { EvidenceList } from "@/components/EvidenceList";
 import { ProcessingTimeline } from "@/components/ProcessingTimeline";
 import { SummaryToggle } from "@/components/SummaryToggle";
-import { addBlockNodeLinkAction, addBlockTopicLinkAction, addOrCreateBlockNodeLinkAction, deleteBlockAction, recaptureBlockAction, removeBlockNodeLinkAction, removeBlockTopicLinkAction, reprocessBlockWithAiAction, retryBlockProcessingAction, setManualContentAction, toggleBlockPinAction, updateBlockAction } from "@/app/actions";
+import { addBlockNodeLinkAction, addBlockTopicLinkAction, addOrCreateBlockNodeLinkAction, deleteBlockAction, recaptureBlockAction, removeBlockNodeLinkAction, removeBlockTopicLinkAction, reprocessBlockWithAiAction, retryBlockProcessingAction, setManualContentAction, submitBlockToWaybackAction, toggleBlockPinAction, updateBlockAction } from "@/app/actions";
 import { getCsrfToken, isAuthenticated } from "@/lib/auth";
 import { libraryStore } from "@/lib/store/library";
 import { getSettings } from "@/lib/settings";
 import { getWorkerHeartbeat } from "@/lib/workerHeartbeat";
+
+type WaybackView = {
+  status: string;
+  url?: string;
+  timestamp?: string;
+  checkedAt?: string;
+  submittedAt?: string;
+  error?: string;
+};
+
+function getWaybackView(metadata: Record<string, unknown>): WaybackView {
+  const value = metadata.wayback;
+  if (!value || typeof value !== "object") return { status: "unchecked" };
+  const wayback = value as Record<string, unknown>;
+  return {
+    status: typeof wayback.status === "string" ? wayback.status : "unchecked",
+    url: typeof wayback.url === "string" ? wayback.url : undefined,
+    timestamp: typeof wayback.timestamp === "string" ? wayback.timestamp : undefined,
+    checkedAt: typeof wayback.checkedAt === "string" ? wayback.checkedAt : undefined,
+    submittedAt: typeof wayback.submittedAt === "string" ? wayback.submittedAt : undefined,
+    error: typeof wayback.error === "string" ? wayback.error : undefined,
+  };
+}
 
 export default async function BlockPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -34,6 +57,7 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
   const linkedNodes = block.nodeLinks.map((link) => ({ link, node: nodes.find((node) => node.id === link.nodeId) })).filter((item): item is { link: typeof block.nodeLinks[number]; node: (typeof nodes)[number] } => Boolean(item.node));
   const addableTopics = topics.filter((topic) => !linkedTopicIds.has(topic.id));
   const addableNodes = nodes.filter((node) => !linkedNodeIds.has(node.id));
+  const wayback = getWaybackView(block.metadata);
 
   return (
     <>
@@ -251,6 +275,47 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
                   <dd className="mt-1">{block.status}</dd>
                 </div>
               </dl>
+            </div>
+            <div className="border border-line p-4 text-sm">
+              <p className="mb-3 text-xs uppercase tracking-wide text-muted">Internet Archive</p>
+              {wayback.status === "available" && wayback.url ? (
+                <div className="space-y-2">
+                  <p className="text-muted">Archived copy available.</p>
+                  <a href={wayback.url} target="_blank" rel="noreferrer" className="inline-block underline">Open Wayback copy</a>
+                  {wayback.timestamp ? <p className="text-xs text-muted">Snapshot {wayback.timestamp}</p> : null}
+                </div>
+              ) : wayback.status === "missing" ? (
+                <div className="space-y-3">
+                  <p className="text-muted">No archive found on Wayback Machine.</p>
+                  {authed ? (
+                    <form action={submitBlockToWaybackAction} className="space-y-2">
+                      <input type="hidden" name="csrf" value={csrf} />
+                      <input type="hidden" name="id" value={block.id} />
+                      <p className="text-xs leading-relaxed text-muted">Submitting may make this URL publicly discoverable on archive.org.</p>
+                      <button type="submit" className="border border-line px-3 py-1.5 text-sm text-muted hover:border-ink hover:text-ink">Submit to Wayback Machine</button>
+                    </form>
+                  ) : null}
+                </div>
+              ) : wayback.status === "submitted" ? (
+                <div className="space-y-2">
+                  <p className="text-muted">Submitted to Wayback Machine. Capture may take a few minutes.</p>
+                  {wayback.submittedAt ? <p className="text-xs text-muted">Submitted {new Date(wayback.submittedAt).toLocaleString()}</p> : null}
+                </div>
+              ) : wayback.status === "failed" ? (
+                <div className="space-y-3">
+                  <p className="text-muted">Wayback lookup failed.</p>
+                  {wayback.error ? <p className="text-xs text-muted">{wayback.error}</p> : null}
+                  {authed ? (
+                    <form action={submitBlockToWaybackAction}>
+                      <input type="hidden" name="csrf" value={csrf} />
+                      <input type="hidden" name="id" value={block.id} />
+                      <button type="submit" className="border border-line px-3 py-1.5 text-sm text-muted hover:border-ink hover:text-ink">Try submitting</button>
+                    </form>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="text-muted">Wayback lookup is pending.</p>
+              )}
             </div>
             <div className="border border-line p-4">
               <p className="mb-3 text-xs uppercase tracking-wide text-muted">Connected nodes</p>

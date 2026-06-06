@@ -234,6 +234,15 @@ export async function recaptureBlockAction(formData: FormData) {
   redirect(`/blocks/${id}`);
 }
 
+export async function submitBlockToWaybackAction(formData: FormData) {
+  await requireAuthAndCsrf(formData, "/login");
+  const id = String(formData.get("id") ?? "");
+  if (!id) redirect("/");
+  await libraryStore.submitBlockToWayback(id);
+  revalidatePath(`/blocks/${id}`);
+  redirect(`/blocks/${id}`);
+}
+
 export async function setManualContentAction(formData: FormData) {
   await requireAuthAndCsrf(formData, "/login");
   const id = String(formData.get("id") ?? "");
