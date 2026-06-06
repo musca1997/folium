@@ -611,6 +611,19 @@ export function createLibraryStore(options: StoreOptions = {}) {
       fresh.status = block.summary || fresh.nodeLinks.length || fresh.topicLinks.length ? "indexed" : "pending"; fresh.updatedAt = nowIso(); await writeData(data); return fresh;
     },
 
+    async checkBlockWayback(id: string): Promise<Block> {
+      const existing = await this.getBlock(id);
+      if (!existing) throw new Error(`Block not found: ${id}`);
+      const wayback = await checkWaybackAvailability(existing.url);
+      return updateData((data) => {
+        const block = data.blocks.find((item) => item.id === id);
+        if (!block) throw new Error(`Block not found: ${id}`);
+        block.metadata = { ...block.metadata, wayback };
+        block.updatedAt = nowIso();
+        return block;
+      });
+    },
+
     async submitBlockToWayback(id: string): Promise<Block> {
       const existing = await this.getBlock(id);
       if (!existing) throw new Error(`Block not found: ${id}`);

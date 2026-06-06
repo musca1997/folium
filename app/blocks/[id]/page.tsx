@@ -7,7 +7,7 @@ import { AutoRefresh } from "@/components/AutoRefresh";
 import { EvidenceList } from "@/components/EvidenceList";
 import { ProcessingTimeline } from "@/components/ProcessingTimeline";
 import { SummaryToggle } from "@/components/SummaryToggle";
-import { addBlockNodeLinkAction, addBlockTopicLinkAction, addOrCreateBlockNodeLinkAction, deleteBlockAction, recaptureBlockAction, removeBlockNodeLinkAction, removeBlockTopicLinkAction, reprocessBlockWithAiAction, retryBlockProcessingAction, setManualContentAction, submitBlockToWaybackAction, toggleBlockPinAction, updateBlockAction } from "@/app/actions";
+import { addBlockNodeLinkAction, addBlockTopicLinkAction, addOrCreateBlockNodeLinkAction, checkBlockWaybackAction, deleteBlockAction, recaptureBlockAction, removeBlockNodeLinkAction, removeBlockTopicLinkAction, reprocessBlockWithAiAction, retryBlockProcessingAction, setManualContentAction, submitBlockToWaybackAction, toggleBlockPinAction, updateBlockAction } from "@/app/actions";
 import { getCsrfToken, isAuthenticated } from "@/lib/auth";
 import { libraryStore } from "@/lib/store/library";
 import { getSettings } from "@/lib/settings";
@@ -281,7 +281,7 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
               {wayback.status === "available" && wayback.url ? (
                 <div className="space-y-2">
                   <p className="text-muted">Archived copy available.</p>
-                  <a href={wayback.url} target="_blank" rel="noreferrer" className="inline-block underline">Open Wayback copy</a>
+                  <a href={wayback.url} target="_blank" rel="noreferrer" className="inline-block underline">Wayback Archive</a>
                   {wayback.timestamp ? <p className="text-xs text-muted">Snapshot {wayback.timestamp}</p> : null}
                 </div>
               ) : wayback.status === "missing" ? (
@@ -297,9 +297,17 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
                   ) : null}
                 </div>
               ) : wayback.status === "submitted" ? (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <p className="text-muted">Submitted to Wayback Machine. Capture may take a few minutes.</p>
+                  {wayback.error ? <p className="text-xs leading-relaxed text-muted">{wayback.error}</p> : null}
                   {wayback.submittedAt ? <p className="text-xs text-muted">Submitted {new Date(wayback.submittedAt).toLocaleString()}</p> : null}
+                  {authed ? (
+                    <form action={checkBlockWaybackAction}>
+                      <input type="hidden" name="csrf" value={csrf} />
+                      <input type="hidden" name="id" value={block.id} />
+                      <button type="submit" className="border border-line px-3 py-1.5 text-sm text-muted hover:border-ink hover:text-ink">Check again</button>
+                    </form>
+                  ) : null}
                 </div>
               ) : wayback.status === "failed" ? (
                 <div className="space-y-3">
@@ -314,7 +322,16 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
                   ) : null}
                 </div>
               ) : (
-                <p className="text-muted">Wayback lookup is pending.</p>
+                <div className="space-y-3">
+                  <p className="text-muted">Wayback lookup has not run for this block yet.</p>
+                  {authed ? (
+                    <form action={checkBlockWaybackAction}>
+                      <input type="hidden" name="csrf" value={csrf} />
+                      <input type="hidden" name="id" value={block.id} />
+                      <button type="submit" className="border border-line px-3 py-1.5 text-sm text-muted hover:border-ink hover:text-ink">Check Wayback Machine</button>
+                    </form>
+                  ) : null}
+                </div>
               )}
             </div>
             <div className="border border-line p-4">

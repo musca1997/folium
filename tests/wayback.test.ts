@@ -43,6 +43,27 @@ describe("Wayback integration", () => {
     expect(result.url).toBeUndefined();
   });
 
+  it("treats a Save Page Now edge error as submitted after checking availability", async () => {
+    let calls = 0;
+    const fetcher: typeof fetch = async (input) => {
+      calls += 1;
+      const url = String(input);
+      if (url.startsWith("https://web.archive.org/save/")) {
+        return new Response("", { status: 523 });
+      }
+      return jsonResponse({ archived_snapshots: {} });
+    };
+
+    const result = await submitToWayback("https://example.com/flaky", { fetcher, waitMs: 0 });
+
+    expect(calls).toBe(2);
+    expect(result).toMatchObject({
+      status: "submitted",
+      source: "save_page_now",
+      error: "Wayback Save Page Now returned 523. Capture may still be queued by archive.org.",
+    });
+  });
+
   it("submits a missing page and returns the newly available snapshot", async () => {
     let calls = 0;
     const fetcher: typeof fetch = async (input) => {
