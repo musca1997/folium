@@ -152,12 +152,15 @@ npx playwright install chromium
 
 近期：
 
-- [ ] 添加 block-level 手动 topic/node 编辑和 override controls。
-- [ ] 改进 worker diagnostics 与 processing event history。
+- [x] 添加 block-level 手动 topic/node 编辑。
+- [ ] 添加 reprocessing 专用的 taxonomy override/lock 控制。
+- [ ] 添加持久化的逐步骤 processing event history 和更丰富的 worker diagnostics。
 - [ ] 添加 taxonomy suggestions review queue，审核后再影响全局图谱。
 - [ ] 记录 deterministic taxonomy explanations：命中的 LCC rule、terms、source 和添加的 node hints。
 - [ ] 先添加 JSON 与浏览器 bookmarks 导入/导出，再支持 Markdown、Linkding 和 Raindrop。
-- [ ] 添加 API route 和 CLI command 测试。
+- [x] 添加 Agent API token/auth 测试。
+- [ ] 添加 API route 测试。
+- [ ] 添加 CLI command 测试。
 - [ ] 打包 CLI，方便本地/全局安装。
 - [ ] 添加生产 Docker health checks 和 systemd/Caddy/nginx 示例。
 - [ ] 添加 Library list view、密度控制和批量操作。
@@ -165,9 +168,10 @@ npx playwright install chromium
 Taxonomy 与策展质量：
 
 - [x] 将 canonical taxonomy 和 deterministic LCC rules 移到独立 taxonomy module。
+- [x] 添加 taxonomy rename、alias、merge 和 delete flows。
+- [ ] 添加 canonical taxonomy review flows。
 - [ ] 将 taxonomy explanation、review 和 override flows 拆到独立模块。
 - [ ] 添加 negative/context rules，减少误判 nodes 和 topic hints。
-- [ ] 完成 taxonomy rename、alias、merge、delete 和 canonical review flows。
 - [ ] 添加 derived topic-node visual edges 和更强的 low-signal node pruning。
 
 搜索与存储：
