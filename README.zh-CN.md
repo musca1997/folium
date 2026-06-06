@@ -149,6 +149,7 @@ npx playwright install chromium
 - [x] 添加 LCC canonical topic registry、deterministic domain nodes，并在卡片上显示 topic/node tags。
 - [x] 添加中英文双语 summaries，并通过 Settings 控制 summary language toggle。
 - [x] 改进 Graph 可读性：LCC topic islands、隐藏 source、relevance filtering、hover focus 和 orphan-node filtering。
+- [x] 添加 Wayback Machine 查询、归档状态显示，以及 block 级手动 Save Page Now 提交。
 
 近期：
 
@@ -159,8 +160,8 @@ npx playwright install chromium
 - [ ] 记录 deterministic taxonomy explanations：命中的 LCC rule、terms、source 和添加的 node hints。
 - [ ] 先添加 JSON 与浏览器 bookmarks 导入/导出，再支持 Markdown、Linkding 和 Raindrop。
 - [x] 添加 Agent API token/auth 测试。
-- [ ] 添加 API route 测试。
-- [ ] 添加 CLI command 测试。
+- [x] 添加 API route 测试。
+- [x] 添加 CLI command 测试。
 - [ ] 打包 CLI，方便本地/全局安装。
 - [ ] 添加生产 Docker health checks 和 systemd/Caddy/nginx 示例。
 - [ ] 添加 Library list view、密度控制和批量操作。

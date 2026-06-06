@@ -149,6 +149,7 @@ Completed foundation:
 - [x] LCC canonical topic registry, deterministic domain nodes, and topic/node tag display on cards.
 - [x] Bilingual English/Chinese summaries with a settings-controlled summary language toggle.
 - [x] Graph readability improvements with LCC topic islands, source hiding, relevance filtering, hover focus, and orphan-node filtering.
+- [x] Wayback Machine lookup, archive status display, and manual per-block Save Page Now submission.
 
 Near term:
 
@@ -159,8 +160,8 @@ Near term:
 - [ ] Record deterministic taxonomy explanations: matched LCC rule, terms, source, and added node hints.
 - [ ] Add import/export for JSON and browser bookmarks first, then Markdown, Linkding, and Raindrop.
 - [x] Add Agent API token/auth tests.
-- [ ] Add API route tests.
-- [ ] Add CLI command tests.
+- [x] Add API route tests.
+- [x] Add CLI command tests.
 - [ ] Package the CLI for easier local/global install.
 - [ ] Add production Docker health checks and systemd/Caddy/nginx examples.
 - [ ] Add Library list view, density controls, and bulk actions.
