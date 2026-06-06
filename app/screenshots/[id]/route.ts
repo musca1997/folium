@@ -10,23 +10,20 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (!block) notFound();
   if (block.visibility !== "public" && !(await isAuthenticated())) notFound();
 
-  const candidates = [
-    { path: join(process.cwd(), "data", "screenshots", `${id}.webp`), contentType: "image/webp" },
-    { path: join(process.cwd(), "data", "screenshots", `${id}.png`), contentType: "image/png" },
-  ];
+  const cacheControl = block.visibility === "public" ? "public, max-age=31536000, immutable" : "private, max-age=86400";
 
-  for (const candidate of candidates) {
-    try {
-      const bytes = await readFile(candidate.path);
-      return new Response(bytes, {
-        headers: {
-          "content-type": candidate.contentType,
-          "cache-control": block.visibility === "public" ? "public, max-age=31536000, immutable" : "private, max-age=86400",
-        },
-      });
-    } catch {
-      // Try the next format for legacy screenshots.
-    }
+  try {
+    const bytes = await readFile(join(process.cwd(), "data", "screenshots", `${id}.webp`));
+    return new Response(bytes, { headers: { "content-type": "image/webp", "cache-control": cacheControl } });
+  } catch {
+    // Try the legacy PNG screenshot below.
+  }
+
+  try {
+    const bytes = await readFile(join(process.cwd(), "data", "screenshots", `${id}.png`));
+    return new Response(bytes, { headers: { "content-type": "image/png", "cache-control": cacheControl } });
+  } catch {
+    // Fall through to 404.
   }
 
   notFound();
