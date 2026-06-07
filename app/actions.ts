@@ -107,7 +107,7 @@ export async function addBlockNodeLinkAction(formData: FormData) {
 export async function addOrCreateBlockNodeLinkAction(formData: FormData) {
   await requireAuthAndCsrf(formData, "/login");
   const blockId = String(formData.get("blockId") ?? "");
-  const name = String(formData.get("nodeName") ?? "").trim();
+  const name = String(formData.get("manualNodeName") ?? formData.get("nodeName") ?? "").trim();
   if (!blockId || !name) redirect(blockId ? `/blocks/${blockId}` : "/");
   await libraryStore.addOrCreateBlockNodeLink(blockId, {
     name,

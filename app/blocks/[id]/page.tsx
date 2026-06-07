@@ -201,7 +201,7 @@ export default async function BlockPage({ params }: { params: Promise<{ id: stri
                       <form action={addOrCreateBlockNodeLinkAction} className="mt-2 space-y-2 border border-line p-2">
                         <input type="hidden" name="csrf" value={csrf} />
                         <input type="hidden" name="blockId" value={block.id} />
-                        <input name="nodeName" placeholder="New or existing node name" className="w-full border border-line px-2 py-1.5 text-xs text-ink outline-none focus:border-ink" />
+                        <input name="manualNodeName" placeholder="New or existing node name" className="w-full border border-line px-2 py-1.5 text-xs text-ink outline-none focus:border-ink" />
                         <div className="flex gap-2">
                           <select name="nodeType" defaultValue="Concept" className="border border-line bg-white px-2 py-1.5 text-xs text-ink">
                             {(["Concept", "Project", "Technology", "Person", "Work", "Question", "Aesthetic"] as const).map((type) => <option key={type} value={type}>{type}</option>)}
