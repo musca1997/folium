@@ -1,6 +1,9 @@
 import { setTimeout as sleep } from "node:timers/promises";
+import { loadAppEnv } from "@/lib/env/loadAppEnv";
 import { libraryStore } from "@/lib/store/library";
 import { writeWorkerHeartbeat } from "@/lib/workerHeartbeat";
+
+loadAppEnv();
 
 const once = process.argv.includes("--once");
 const intervalMs = Number(process.env.FOLIUM_WORKER_INTERVAL_MS ?? 2000);

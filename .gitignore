@@ -11,6 +11,7 @@ packages/extension/*source.zip
 
 # Local Folium state and secrets
 data/*.json
+data/*.log
 data/screenshots/
 data/backups/
 data/login-rate-limit.json
