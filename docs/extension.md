@@ -26,13 +26,19 @@ packages/extension/dist-firefox
 3. Click **Load unpacked**.
 4. Select `packages/extension/dist-chrome`.
 
-## Load in Firefox
+## Install in Firefox
+
+Install the approved Folium Web Clipper from Mozilla Add-ons:
+
+https://addons.mozilla.org/en-US/firefox/addon/folium-web-clipper/
+
+## Load in Firefox for development
 
 1. Open `about:debugging#/runtime/this-firefox`.
 2. Click **Load Temporary Add-on...**.
 3. Select `packages/extension/dist-firefox/manifest.json`.
 
-Firefox temporary add-ons are removed when Firefox restarts. For long-term Firefox use, package and sign the extension through Mozilla Add-ons or use a Firefox build/profile that allows unsigned extensions.
+Firefox temporary add-ons are removed when Firefox restarts. For development or unsigned local builds, use the temporary add-on flow above or a Firefox build/profile that allows unsigned extensions.
 
 ## Configure
 

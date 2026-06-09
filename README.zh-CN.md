@@ -104,6 +104,7 @@ npx playwright install chromium
 ## CLI、API 与 Web Clipper
 
 - CLI 文档：[docs/cli.md](./docs/cli.md)
+- Firefox Add-on：[Folium Web Clipper](https://addons.mozilla.org/en-US/firefox/addon/folium-web-clipper/)
 - Web Clipper 文档：[docs/extension.md](./docs/extension.md)
 - Agent skill：[skills/folium/SKILL.md](./skills/folium/SKILL.md)
 
